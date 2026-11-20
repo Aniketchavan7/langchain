@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:749c5b8a9dc54f98b0e558c8a60ea05b9e8e69a523520501f718ad77d6b7b4a5",
+  "pageVersion": "sha256:ba1825501f83e5885b22a45113433f698e81675abbe23011aabf300362d8e4cb",
   "claims": [
     {
       "id": "claim_0240415bda374dfcaaea98d68fe5e7b4",
@@ -335,10 +335,132 @@
           "version": "repo-lines-v1:sha256:c1763344c9294fe2d4b01d56225f97942d1faa5fd1d004fc088d1fc357aec39b:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjU3OTBlZjUyNjU2ZWVmYmE1ZGJhOGNjNzM4MWRmNzVjNDY0OGU3NWMyNDMwNGE5ZmExZDM4MTM2MGU5ZThjOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTZhNzE1MjU3MmVlODRmMTA5MDZjNzRiOWYyYTkyNDM0ZGRhYjBlM2M0MjgxM2IwNGU1OTdlZmNlYzk1MWIyNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWY0NWFhNThlYmM3MmZjNDlkNDFkOTA5ZmM0NjAwNDY4MmMwN2Q4MzRhNWU1YjUxYjY5NmU2Y2M2ODc1N2I3NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGFlN2EwY2FiYzQ1MGNhNDk5ZTE4OWI3NjIzZjBjNGRkZGQ5OGQ0ODgzNmJmNzQ2N2FlY2ZkZmMwNWUzNWE4ZiJ9"
         }
       ]
+    },
+    {
+      "id": "claim_5dffe7703010477db44355bdb4e0f225",
+      "statement": "HumanInTheLoopMiddleware pauses agent execution via LangGraph interrupts to request human approval before tool calls are executed. It supports two interrupt modes: 'batched' (one interrupt per model turn with multiple decisions) and 'per_call' (one interrupt per gated tool call with typed response schema). Reviewers can approve, edit, reject, or respond to tool calls.",
+      "evidence": [
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L402-L491",
+          "version": "repo-lines-v1:sha256:c4861d13f7ff2f71c0d438cfc837c3c7ea8922e27b8f40cead63f75338bf7a7b:eyJzZWxlY3RlZExpbmVDb3VudCI6OTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxNWRmMmI2MDc2NjFmM2ZhMjRlMzNjMjA2YTJlMTU2YmUyNmMwZDJmOWZkNTVjOGFlZTk0OTBiYmIxN2Y5NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2YTcxNTI1NzJlZTg0ZjEwOTA2Yzc0YjlmMmE5MjQzNGRkYWIwZTNjNDI4MTNiMDRlNTk3ZWZjZWM5NTFiMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY5ZDVlZmQ1YWE4NDExNDQ1MWRlNTZjNDIwZTJlNjE4YzliNTQ0NGU3ZmEzNDI3YWQ1OThmNzFlNmZjMzQ0MTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyYmU4MzFjMGViMWFhNDE1MTVlOTE0ZDc5NmFjMjE3NDRjMjRhODBmYzUzNjYxZmY0NGEwM2M3NWJmN2RhYzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_dffe769266d444e5ade7aaae1010d418",
+      "statement": "In batched mode (default), after_model hook filters gated tool calls by the 'when' predicate, batches them into a single HITLRequest interrupt, and processes reviewer decisions (approve/edit/reject/respond) matched by position. Edited calls store their modified args in state[_EDITED_TOOL_CALLS_KEY] for wrap_tool_call to substitute at execution time. Rejected/responded calls produce synthetic ToolMessage objects inserted before the tool execution phase.",
+      "evidence": [
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L764-L865",
+          "version": "repo-lines-v1:sha256:3943e4668af0c3795be53d59428c008b2fc27ff1abe4aa657c964343efae8d7f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1M2UwMTAxNTNmZGYxMTVmNjViYTA3NjNkMTIzMGJhYjA1ZWRiZTJlZWYwMzEzZjdkMDVjMzA3YmE2MGNjMjhiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlNmIwNDQ5MTQ2OTcyMmU4MzYzYTk0ZTQwNDQ1MzhlMDEzYTJhMjE3ZTM2YjFlNTY4YmE2MGFjYjdiNGM4ZjJlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0MGFlMjQxMjI1MGQ0ODliNTM3YTllN2FjYTM2ZDJhMjBjYWZiOGEwNDgxYmJiNzg1NTIzOWNmNzk3NTUyZjMzIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJmOTQyMGE2ZGRiZmI4YTViZmUyYTgyMTFlNjYzMTg0YmVjYTliNWUzN2NkYWFhOTE2Y2I3NmM1MjVmNDFkNTFkIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_9bdd7ac5c8c64805ba176a7e9131910d",
+      "statement": "In per_call mode (beta, planned default), wrap_tool_call raises per-call interrupts with ToolApprovalRequest containing tool_call_id, name, args, and description. Each interrupt has a typed response_schema listing allowed decisions for that tool. The reviewer submits a single Decision keyed by interrupt ID. Answers are validated by LangGraph before saving.",
+      "evidence": [
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L702-L762",
+          "version": "repo-lines-v1:sha256:a6cbab9da6b62dad87e9621ccbffc0ca16bdeff0b536c5ccc338cab0f41f50ce:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmMWIyZDA0Mzc4NjgzYjY2YjVhMTYyMWVhN2Y4NDk5ZTFkNDI3M2ZjYWQxZGViNTQ3NDgyMWEzNjM3N2Y2MmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkMWIzN2Y5MjBjMzFlM2MzZjk2MjQ2MjI1NmFiYTBhMTE2ZGE0NjQxM2Y5MTNmZmQyZDQ5YjZkZjZlODcxZjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ0ZjFkY2I1ZGY0ZmVjZjljOTFkZjUzYWFkNGZmZTMyY2RlNjU0OTlmNmUyMGI2YTZjMTk0ZTgwODU3ZjM4ODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMzYmVhYmMyNTYzZTNlMDg3ZmJhNDI2NDM1MGVmYmQ4ZTAyMjE0NTkwZWYwOTk0YjYyMmRjODgxOTRhZmJlNjEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d3a7763e8bb74b289017619cdd27470d",
+      "statement": "InterruptOnConfig dict specifies allowed_decisions list, optional description (static string or callable), and optional 'when' predicate. The 'when' predicate receives ToolCallRequest and returns True to interrupt or False to auto-approve. Per-call mode calls the predicate in wrap_tool_call; batched mode calls it in after_model with a synthetic ToolRuntime.",
+      "evidence": [
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L310-L393",
+          "version": "repo-lines-v1:sha256:a39f83b2dca6b1cefd29b3d716eaa2f58bf50886d018702657ff8f1adcfd04bc:eyJzZWxlY3RlZExpbmVDb3VudCI6ODQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxZDcxNDdiNDM1NjkxM2M1Y2I2NWZiM2ExNmE3M2Q3MTlkYjI5Y2Y3M2RkNGUwMDU0NjI5YTUzNDliNjU3NjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlMTAyYTE5YmE2NTQwZmFhMjNhMTQ4NTZkYmM0MTMyZTQ5MjFkYjA4OWM1NjA5NThjZGQ2ZDlkYTAwZjkyODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNhMjY4NThhZTc1ODM1NmFkMTcwNzllMzA2NmY2ZWU3YjBjOWEwY2I2ZWMzZTVkNmZiYjliZDExMDNhMGQwODcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_80631cefd92041448e1074e4e653adf1",
+      "statement": "Four decision types are supported: ApproveDecision (let it run), EditDecision (modify tool name and args - name is pinned to prevent tool switching), RejectDecision (block execution with optional reason), and RespondDecision (skip tool execution, return synthetic ToolMessage with human-provided message).",
+      "evidence": [
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L117-L167",
+          "version": "repo-lines-v1:sha256:d236ebadb56c242ebc04a4370b17a06917ac080e2cd77e3afcf12955c205ee8d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjNTJhYTMyZjM0NTQ0NDUxZjNlZDc5MzJhYjNkMzZkY2ViNTM0NzE0OTYyZWU2N2JiNDE4NzJlOWJjMGY0MWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4MTBkY2I4MDRjMmQwMDc4MTFlZWYzYzUzNzNmZTQ4NWI3ZmZkZGMxNzU3OWU2MjZkYTAxMGMwZTEwOGYwMTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyZDQ2MTY1MDUwYzljNjkzNzJiNDlmM2VkNzM2YmM4MDhhYmYxZmMxMjllNTVjNGNiY2ExZjZjODgyZjg1YWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcwOGYyMTM0MGNmNmU0NzllNzg4Zjk1MDUwMDE2ZDc3MzExZDg0MGUzN2IxMzIxOWY0ZjQ0NTA1NTdlMDE0YzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b15eaafdd3d44658b4e196e75cf9d3a8",
+      "statement": "Edited tool calls preserve the model's original call in the message history (via add_notification_metadata). The reviewer's modified args are stored in state[_EDITED_TOOL_CALLS_KEY] keyed by tool_call_id. When wrap_tool_call runs, it checks this map and executes the edited call instead, prepending an edit notice to the tool result.",
+      "evidence": [
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L848-L865",
+          "version": "repo-lines-v1:sha256:825f72cceaef17db1a01dbf9dc4ec8b5719568aa194c73a1ab0386594dd76582:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhN2M1Y2E2YThkOTRjYmFhMDRjM2ViY2ViM2QyOWRlZThlZmUzMzlhYmVjYTkwMWVlYWIxMTY2Y2MxYWEwMzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI4OGUxNjYwNWJhNzY4NDM1ZmJhMzBmNDYyOWU3OWQ5NThjOWQ4MDVmODRjZjA1MTk5ZjEyZDc2MjRiNDA1NGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5NDIwYTZkZGJmYjhhNWJmZTJhODIxMWU2NjMxODRiZWNhOWI1ZTM3Y2RhYWE5MTZjYjc2YzUyNWY0MWQ1MWQifQ"
+        },
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L881-L920",
+          "version": "repo-lines-v1:sha256:330d8734985c4c2ef7adf42041d1822ba0cb95eb8c0b78a6fd2751f3d4378de5:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkMGZkOTI4ZjAxZjZmOGJlNzNkNDYzZWUzOWIwZWFkMDc0ZTYwYzE1ZDczMjBiNDJhYWUxM2Q2OTA3Njg5ZjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3NWJkYzc3YWE0OWE2NGIxMTEwYzhkN2RkMGM1OWIwNzExYWVlNzA3NzdkYmM0MDMwNTc4MmQ4YWY0ZjM5NmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3ODdmOTg4ZTQxYjVlOGEzY2M5Njk0N2JkNDQzYjE4NjFkNjI5ZjYxMjBiNDhmZDY5Yzg4NGI1MjhiZDc3NjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhhZGYyY2E3MzdlMGFkODRiYmJlNmNkOTZhMDJjMDYzNzJiMmFkMzRkNjc0NjhhMDFhMjY3MTVmYjY2M2M4ZTgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_54f6ddf3ca884a4b897ac13d000059c9",
+      "statement": "Rejected and responded tool calls are marked with add_notification_metadata(source='hitl_interrupt_decision') so the model can distinguish them from normal tool results. Rejected calls set status='error'; responded calls set status='success' with the human's message as content.",
+      "evidence": [
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L268-L290",
+          "version": "repo-lines-v1:sha256:15bf6b83ff6f2195f896ca4d59e07ce9ec38c00e2165212f4cc98a08ec320d01:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmMjQ0MDM1YWEzNjMxN2Y2MWJhNzQyNzM5NDFjMjMxOGIzMjc5YzAwYWM5NTA2ZTA2MzdkOWIyZjUwZjBjMzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZlYmU5MjVjMmI4ZjNiOWMxZmMxOThiNjVkM2Q2NTVhZmIzMGQ2ZWZmZmM2MDk3YTQzMjFjY2RhOTI0OTIxNGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhlMzk3NWQ0ODc1ZmU2NTIwYmUzOThkMDYzMjFhNjZhODdhZTIzY2UyYTJiZTRhNzM5OGQwOGEwZmEwZDgxMzQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b5249325a9ac4a13ad35e352822fd000",
+      "statement": "HumanInTheLoopMiddleware requires a checkpointer (e.g., InMemorySaver) to persist state across interrupt/resume cycles. The agent is invoked with Command(resume=...) carrying the reviewer's decision(s) keyed by position (batched) or interrupt ID (per_call). Without checkpointer, the agent cannot pause and resume.",
+      "evidence": [
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L402-L410",
+          "version": "repo-lines-v1:sha256:b55b1d08ccb0089a856ed242a0099832a496c1714726c3697bad909b38cffa85:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjE1ZGYyYjYwNzY2MWYzZmEyNGUzM2MyMDZhMmUxNTZiZTI2YzBkMmY5ZmQ1NWM4YWVlOTQ5MGJiYjE3Zjk3NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjlkNWVmZDVhYTg0MTE0NDUxZGU1NmM0MjBlMmU2MThjOWI1NDQ0ZTdmYTM0MjdhZDU5OGY3MWU2ZmMzNDQxNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjU5MTM3MzIzMTk4MzNhMzc0NzcxYTE3YWZhMTA0NTk1NGMwNWMwZjZhYTQzNjRiMWMyYTY3MzJjNGE2YmRiMSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_c49fb7add4934868b1bcc100bb882708",
+      "statement": "Description can be a static string or a callable taking (tool_call, state, runtime) and returning a formatted string. Dynamic descriptions allow reviewers to see context-specific information (e.g., file paths, email recipients) to make informed decisions.",
+      "evidence": [
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L300-L330",
+          "version": "repo-lines-v1:sha256:6ff05e9c8e1b032aec58ca5eaa179c4ce00a640f87d074cf7077d5ceba8c1710:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmYTZlOGJmNmVhYTQ2NmVjNjIwZTllZjc3Zjc0NWYzZDYxZTllNGQ0ZTg1NTgyNmMyYTk4MWI3YjJjOGU2OTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVjNzM5ZmNmODUyODViZDRlNTI4YzFiZTEzYjNjZWJmNTkwZDNhODI0NGNhYTM0MWQ4NzI5NmEyM2UyOTc0MWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiNTU0N2EzZjk0ZWM5NGRiM2VkYjNlNmI0NWYzZmI5ZTFmZmY4Y2Y3NjI0ZDFmZjJjN2RlMzcwN2JkNzVjNmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM2MWRmYTY2MGE2ZWNiYWY1MTAwNGI4NDhjMWVjOTdlZjc4OTA2OGI2ZWVkMWYzZmIzZDY5MTg1ZWMwY2EyZjMifQ"
+        },
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L617-L624",
+          "version": "repo-lines-v1:sha256:c5a13d390b9a43db6620d587aee38fe933e99305fe48984e3d1e5d8638e40387:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzcyZGM5Y2JjNzQ1NGU4Y2U5NWI5MTBjYzRhZmQ3YjllM2M2MjAxZjczMjAzYzk1MjM2NjM2MGI2MDJhODE5MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGZlYjkzNzIyMzViOTc2OGYxMzk0NDI1NTFjMTkzNmY3NjFmYjIwY2M3MGU1OTFkODE4OTJkNGVlMWNmYTU0MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzdmN2Q3OTMzMDVkNzg3ZTA4Nzg0NDIyZWIzN2I4Mjg2YjIxYTFlZjU1NDRlNmVhZGRlYzg4MGE4Y2M2MWE2MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmM2ODM0NTlkYTZlMmJjNDQwZTFkOTVmYTVkNWNjZGUyMWM4ZGRhMDVjNmM2YjFkYjc1YmMwZDg5N2MzYjlhZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_dc15ae112680489b9e27ac5503fb050a",
+      "statement": "The 'when' predicate allows conditional interruption: some tool calls are auto-approved while others require review. In batched mode, calls that fail the predicate are silently auto-approved and not batched. In per_call mode, the predicate is called with the real ToolCallRequest inside wrap_tool_call.",
+      "evidence": [
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L362-L392",
+          "version": "repo-lines-v1:sha256:3bbbe06af24c607ab8310548f75eadd980a6a1dce7e0780bd4dd414aaaf9a2b4:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExYjNjNTc5OWNlYTNlNmZmMDlhZjc1OTIwNzMzNjA5YTliYzZhZTE5ZmZhZGRjMjgyMTYzMWMyMzQ4YWVkMzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2YTcxNTI1NzJlZTg0ZjEwOTA2Yzc0YjlmMmE5MjQzNGRkYWIwZTNjNDI4MTNiMDRlNTk3ZWZjZWM5NTFiMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZiNDBhMTBlY2JhYWM1MTZiMTkzYzhiMmE4YjZmNzFkNjQ3NWYxZDYzOGEwMzYzN2Y0Y2JmZjdlMGNjNWVlYjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdjYzQ2NjQ1NmZhODhiZDE0MjI0MThjODViMjQ1MDZjYWMyYjA2Nzg3ODFjODk5YWVmZTgxZTg2Yzk2N2NhOTMifQ"
+        },
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L668-L700",
+          "version": "repo-lines-v1:sha256:578235886ff9ee499019708623de21216eae293cf209d1c8767a40d902323f0c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlOTRhNDE4MmQ3N2Y1N2IyZGNhZWJjOTFmODZmZmU5ZjMwZGFjMDI2NjI5MWVjMDFmNDNlODNmNzZiMzYzZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmYzM2OThkYjM0MGJjOWY3NDFhMzY5NmU3YTdiZTNkYTNmYjk0MDUwZTY2ZTU1NzJjMDRkMDFiNDA5NjRhYmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ0YWMyMDlkNjcyODM2YTRjM2RkMGVjZWQxMmRjMGU2YjZmNzhkMzgxZmY1MTY4YjdjMDdhODQ3NWRhMTlhMzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlZmVhMzJmNDk2Y2E3MWU1ZmJhZWI1OWQ0Yzk2M2Q5ZjU0YTU1ZmIyNGE3NWRlNWUwZTg3NWM2YjRiZGJmZjEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_35cda6d1a23c46c68952827e53301cac",
+      "statement": "In per_call mode, middleware order matters: HumanInTheLoopMiddleware should be listed before tool retry or error-handling middleware so it wraps them. On resume, each paused tool call runs middleware before it again, so that middleware must not have side effects before calling handler.",
+      "evidence": [
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L557-L567",
+          "version": "repo-lines-v1:sha256:43c9f08f8da482182c18d79a2480c6d2c897ffbf86c75513b7f099f1374e02c9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0NmRkNDYyMDBjMDIyZGE4MjcwY2NmYzI4YzhlOGRhODEwNWFiOGU0NzE4ZTYyNTVkMzdjYmY0MjU4MWQzODQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFlZjQ1Mzc1N2JjNDE0M2RmZDgzMzc0OWI3MjQ0NjIwOWZjZGE5MjI4NmFjN2VhMjRhNWY3ZjczODhhZmViYjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjZGNiNjU5ZDM4OTRkODMzODkyYWEwMjNjNjQ2NzQ0MDM1ZGMzZmVjMjI1ZWEzY2E5OGM4OWQyYjE3NjlhZjQifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.0",
-    "at": "2026-11-18T08:17:15.497Z"
+    "at": "2026-11-20T08:17:03.730Z"
   }
 }

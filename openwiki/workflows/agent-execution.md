@@ -1,20 +1,22 @@
 ---
 type: "Workflow"
-title: "Agent Execution: Agentic Loops and State Management"
-description: "Detailed walkthrough of agent lifecycle, execution loops, state management, tool calling, error handling, and observability in LangChain agents."
-tags: ["agents", "agentic-loop", "middleware", "tool-calling", "state-management", "observability"]
+title: "Agent Execution: Loop Structure and Lifecycle"
+description: "How agents run: the basic loop, state management, middleware integration, and human-in-the-loop patterns. Covers the agentic loop, tool calling, structured output, middleware composition, and approval workflows."
+tags: ["agents", "agentic-loop", "middleware", "tool-calling", "state-management", "observability", "human-in-the-loop"]
 verified:
   - by: openwiki/0.5.0
-    at: 2026-11-18T08:17:15.497Z
+    at: 2026-11-20T08:17:03.730Z
 sources:
   - id: openwiki-source-71e882e1ac9757ea8e959a7c
     resource: repo://libs/langchain_v1/langchain/agents/factory.py
+  - id: openwiki-source-bc95cc8fff4e07f74e50ce8b
+    resource: repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py
   - id: openwiki-source-03e8ca0eebe37feda8566793
     resource: repo://libs/langchain_v1/langchain/agents/middleware/types.py
-generated: { by: "openwiki/0.5.0", at: "2026-11-06T08:17:28.425Z" }
+generated: { by: "openwiki/0.5.0", at: "2026-11-20T08:17:03.730Z" }
 ---
 
-# Agent Execution: Agentic Loops and State Management
+# Agent Execution: Loop Structure and Lifecycle
 
 Agent execution in LangChain is built on a composable architecture where language models repeatedly plan, invoke tools, and interpret results in a structured loop. The [`create_agent`][langchain.agents.create_agent] factory function constructs this agentic loop by orchestrating:
 
@@ -23,7 +25,7 @@ Agent execution in LangChain is built on a composable architecture where languag
 3. **Tool execution and routing** (looping, termination, or state jumps)
 4. **Observability** (tracing, callbacks, state transitions)
 
-This document explains the agent lifecycle, loop control, state management, middleware patterns, error handling, and real-world patterns for production agents.
+This document explains the agent lifecycle, loop control, state management, middleware patterns, human-in-the-loop approval workflows, error handling, and real-world patterns for production agents.
 
 ## Agent Lifecycle: From Initialization to Termination
 
@@ -127,6 +129,8 @@ graph TD
     
     AFTER_AGENT --> END["END"]
 ```
+
+Agent execution control flow: model → routing → tools → loop or termination.
 
 ## Creating an Agent with `create_agent()`
 
@@ -387,6 +391,238 @@ agent = create_agent(model="openai:gpt-4o", tools=[...], middleware=middleware)
 
 **State schema composition:**
 Middleware state schemas are merged in order: `middleware[0].state_schema`, `middleware[1].state_schema`, ..., then `agent.state_schema` (if provided). The agent's explicit `state_schema` always wins field conflicts, allowing users to override middleware annotations.
+
+## Human-in-the-Loop (HITL) Middleware
+
+The `HumanInTheLoopMiddleware` pauses agent execution to request human approval before tool calls are executed. This is essential for safety-critical operations where automated execution is risky.
+
+### Overview
+
+HITL pauses the agent via LangGraph interrupts, allowing a human reviewer to:
+- **Approve**: Let the tool call execute as requested.
+- **Edit**: Modify the tool name and/or arguments, then execute the edited call.
+- **Reject**: Block execution and provide a reason (or generic rejection message).
+- **Respond**: Provide a response on behalf of the tool (skips execution).
+
+The agent resumes with `Command(resume=...)` after the reviewer submits their decision.
+
+### Two Interrupt Modes
+
+#### Batched Mode (Default)
+
+One interrupt per model turn. The model produces multiple tool calls, all gated calls are batched into a single interrupt, and the reviewer responds with a list of decisions (one per call, matched by position).
+
+```python
+from langchain.agents import create_agent
+from langchain.agents.middleware import HumanInTheLoopMiddleware
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.types import Command
+
+# Setup
+agent = create_agent(
+    model,
+    tools=[send_email, delete_file],
+    middleware=[
+        HumanInTheLoopMiddleware(
+            interrupt_on={"send_email": True, "delete_file": True}
+        )
+    ],
+    checkpointer=InMemorySaver(),
+)
+
+config = {"configurable": {"thread_id": "1"}}
+
+# Invoke - pauses for approval
+result = agent.invoke(
+    {"messages": [{"role": "user", "content": "Email Alice, then delete the report."}]},
+    config,
+    version="v2",
+)
+# Interrupt raised: `value["action_requests"]` lists send_email, then delete_file.
+
+# Resume with decisions
+result = agent.invoke(
+    Command(
+        resume={
+            "decisions": [
+                {"type": "approve"},
+                {"type": "reject", "message": "Keep the report."},
+            ]
+        }
+    ),
+    config,
+    version="v2",
+)
+```
+
+#### Per-Call Mode (Beta, Planned Default)
+
+One interrupt per gated tool call. As each tool call starts execution, it triggers its own interrupt with a typed `response_schema` listing allowed decisions for that specific tool.
+
+```python
+agent = create_agent(
+    model,
+    tools=[send_email, delete_file],
+    middleware=[
+        HumanInTheLoopMiddleware(
+            interrupt_on={
+                "send_email": {"allowed_decisions": ["approve", "edit", "reject"]},
+                "delete_file": {"allowed_decisions": ["approve", "reject"]},
+            },
+            interrupt_mode="per_call",
+        )
+    ],
+    checkpointer=InMemorySaver(),
+)
+
+config = {"configurable": {"thread_id": "2"}}
+
+# Invoke - pauses for first approval
+result = agent.invoke(
+    {"messages": [{"role": "user", "content": "Email Alice, then delete the report."}]},
+    config,
+    version="v2",
+)
+# First interrupt: send_email approval
+
+# Resume with first decision (keyed by interrupt ID)
+answers = {}
+for interrupt in result.interrupts:
+    if interrupt.value["name"] == "send_email":
+        answers[interrupt.id] = {"type": "approve"}
+    elif interrupt.value["name"] == "delete_file":
+        answers[interrupt.id] = {"type": "reject", "message": "Keep the report."}
+
+result = agent.invoke(Command(resume=answers), config, version="v2")
+```
+
+### Configuration and Decision Types
+
+**Configuration per tool:**
+
+```python
+interrupt_on = {
+    "send_email": {
+        "allowed_decisions": ["approve", "edit", "reject"],
+        "description": "Email to: {tool_call['args']['to']}"  # Static or callable
+    },
+    "delete_file": {
+        "allowed_decisions": ["approve", "reject"],
+        "when": lambda req: req.tool_call["args"]["path"].startswith("/etc")  # Conditional interrupt
+    }
+}
+
+middleware = HumanInTheLoopMiddleware(interrupt_on=interrupt_on)
+```
+
+**Decision types:**
+
+- **`ApproveDecision`**: `{"type": "approve"}` – Let it run.
+- **`EditDecision`**: `{"type": "edit", "edited_action": {"name": "tool_name", "args": {...}}}` – Run with modifications.
+- **`RejectDecision`**: `{"type": "reject", "message": "optional reason"}` – Block execution.
+- **`RespondDecision`**: `{"type": "respond", "message": "response text"}` – Skip tool, return synthetic `ToolMessage`.
+
+### How HITL Works Internally
+
+**In batched mode:**
+1. After the model produces an `AIMessage` with tool calls, `after_model` hook checks which calls are gated.
+2. For each gated call, the `when` predicate is evaluated (if provided). Calls passing the predicate are batched.
+3. `interrupt()` is called with a `HITLRequest` containing all action requests and review configs.
+4. Reviewer submits a list of `Decision` objects (one per call, matched by position).
+5. Each decision is processed: approved calls stay, edited calls have their args replaced (tracked in state for `wrap_tool_call`), rejected/responded calls produce synthetic `ToolMessage` objects inserted into the message list.
+6. The model resumes with the revised tool call list.
+
+**In per-call mode:**
+1. Tool calls are not batched. Instead, `wrap_tool_call` checks if the tool is gated.
+2. If gated and the `when` predicate passes, `interrupt()` is called with a `ToolApprovalRequest` specific to that call.
+3. The reviewer submits a single `Decision` keyed by interrupt ID.
+4. If approved, execution proceeds. If edited, the request is updated with the new args. If rejected/responded, a synthetic `ToolMessage` is returned.
+
+**Notification metadata:**
+
+Edited and rejected tool calls are marked with `add_notification_metadata()` so the model can distinguish them from normal tool results. Edited calls include a notice: "Note: a human reviewer replaced this tool call before it ran..."
+
+### HITL Interrupt Request/Response Structure
+
+**Batched request:**
+```python
+HITLRequest = {
+    "action_requests": [
+        {
+            "name": "send_email",
+            "args": {"to": "alice@example.com", "subject": "Hi"},
+            "description": "Email to: alice@example.com"
+        },
+        # ... more action_requests
+    ],
+    "review_configs": [
+        {
+            "action_name": "send_email",
+            "allowed_decisions": ["approve", "edit", "reject"]
+        },
+        # ... more review_configs
+    ]
+}
+
+HITLResponse = {
+    "decisions": [
+        {"type": "approve"},
+        {"type": "reject", "message": "Cannot delete that file."}
+    ]
+}
+```
+
+**Per-call request:**
+```python
+ToolApprovalRequest = {
+    "type": "tool_approval",
+    "tool_call_id": "call_123",
+    "name": "send_email",
+    "args": {"to": "alice@example.com", "subject": "Hi"},
+    "description": "Email to: alice@example.com"
+}
+
+# Response (answered by interrupt ID)
+{
+    "interrupt_id": {"type": "approve"}
+}
+```
+
+### HITL Workflow Sequence
+
+```mermaid
+sequenceDiagram
+    participant Model as Model<br/>(LLM)
+    participant Agent as Agent<br/>(Loop)
+    participant HITL as HITL Middleware<br/>(after_model)
+    participant Reviewer as Human<br/>Reviewer
+    participant Tools as Tool Executor<br/>(wrap_tool_call)
+
+    Model->>Agent: AIMessage with tool_calls
+    Agent->>HITL: after_model hook
+    HITL->>HITL: Filter gated calls
+    HITL->>Agent: Check jump_to routing
+    alt Has gated calls
+        HITL->>Reviewer: interrupt(HITLRequest)
+        Note over Reviewer: Review and decide<br/>(approve/edit/reject)
+        Reviewer->>HITL: Command(resume=decisions)
+        HITL->>HITL: Process decisions<br/>(edit calls, synthetic messages)
+        HITL->>Agent: Updated AI message
+    else No gated calls
+        HITL->>Agent: None (passthrough)
+    end
+    Agent->>Tools: Tool calls
+    Tools->>Tools: Check per-call gate
+    alt Per-call gate triggered
+        Tools->>Reviewer: interrupt(ToolApprovalRequest)
+        Reviewer->>Tools: Command(resume=decision)
+        Tools->>Tools: Process decision
+    end
+    Tools->>Agent: ToolMessage results
+    Agent->>Model: Loop back with results
+```
+
+Human-in-the-loop approval workflow with batched interrupts per model turn.
 
 ## Agent Execution Flow
 
@@ -893,7 +1129,7 @@ def test_retry_middleware():
 Agents created by `create_agent()` are LangGraph `StateGraph` instances that can:
 
 1. **Be subgraphs**: Added to larger agent networks for multi-agent systems.
-2. **Use interrupts**: Pause execution for human review or intervention.
+2. **Use interrupts**: Pause execution for human review or intervention (including HITL middleware).
 3. **Stream outputs**: Real-time token-by-token responses.
 4. **Support nested graphs**: Hierarchical agentic structures.
 

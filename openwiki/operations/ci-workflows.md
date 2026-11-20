@@ -3,6 +3,9 @@ type: "Operations Reference"
 title: "CI/CD Operations and Release Management"
 description: "Operational runbook for CI/CD workflows, troubleshooting, and release procedures."
 tags: [ci, cd, release, automation, github-actions, pypi]
+verified:
+  - by: openwiki/0.5.0
+    at: 2026-11-20T08:17:03.730Z
 sources:
   - id: openwiki-source-6445599f26c9a35886c1c46e
     resource: repo://.github/PULL_REQUEST_TEMPLATE.md
@@ -20,12 +23,8 @@ sources:
     resource: repo://.github/workflows/pr_labeler.yml
   - id: openwiki-source-12805fbf767dc2a3e238645e
     resource: repo://.github/workflows/pr_lint.yml
-generated: { by: "openwiki/0.5.0", at: "2026-11-13T08:16:35.902Z" }
-verified:
-  - by: openwiki/0.5.0
-    at: 2026-11-18T08:17:15.497Z
+generated: { by: "openwiki/0.5.0", at: "2026-11-20T08:17:03.730Z" }
 ---
-
 
 ## Overview
 
@@ -114,17 +113,19 @@ Once the `build` job outputs the matrices, seven jobs run in parallel (if not em
 #### 1. Lint Job
 - Runs `_lint.yml` reusable workflow
 - Per package: Python version from matrix
-- Checks code style, type hints, and formatting
+- Checks code style using Ruff with GitHub annotations (`RUFF_OUTPUT_FORMAT: github`)
+- Runs `make lint_package` for package code and `make lint_tests` for test code
 
 #### 2. Unit Test Job
 - Runs `_test.yml` reusable workflow
 - Matrix: `working-directory` × `python-version`
-- Executes `make tests` with unit test dependencies
+- Executes `make test` with unit test dependencies
+- Also tests with minimum supported dependency versions to ensure backward compatibility
 
 #### 3. Pydantic Compatibility Tests
 - Runs `_test_pydantic.yml` reusable workflow
 - Matrix: `working-directory` × `pydantic-version`
-- Installs pinned Pydantic version and runs `make tests`
+- Installs pinned Pydantic version and runs `make test`
 
 #### 4. Extended Tests
 - Runs in same workflow (not reusable)
@@ -142,6 +143,7 @@ Once the `build` job outputs the matrices, seven jobs run in parallel (if not em
 - Only for packages with VCR cassettes: `libs/partners/openai`
 - Runs integration tests in playback-only mode (uses cached HTTP responses, no API keys)
 - Detects stale cassettes that don't match actual API responses
+- Sets fake API key (`OPENAI_API_KEY: sk-fake`) for playback-only mode
 
 #### 7. Release Option Validation
 - `check-release-options` job validates that `_release.yml` dropdown options match actual package directories
@@ -229,6 +231,35 @@ Infrastructure: `infra`, `deps`, `partners`, `docs`
 **Breaking Changes:**
 - Append `!` after type/scope: `feat(core)!: remove deprecated API`
 - Requires major version bump (MAJOR)
+
+### PR Title Validation Workflow: `pr_lint.yml`
+
+Enforces Conventional Commits format on every PR:
+
+**Trigger:** PR opened, edited, or synchronized
+
+**Validation Steps:**
+1. **Reject empty scope** — Prevents malformed titles like `fix(): description`
+2. **Validate Conventional Commits format** — Uses `amannn/action-semantic-pull-request` action
+3. **Allowed types**: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, release, hotfix
+4. **Scope validation** — Optional scopes from predefined list
+5. **Skip labels** — `ignore-lint-pr-title` label bypasses validation
+
+### PR Trailer Validation: `pr_lint_trailer.yml`
+
+Prevents merge of PRs with banned trailers (Claude-generated commits or Co-authored-by from Anthropic).
+
+**Trigger:** PR opened, edited, synchronized, or reopened
+
+**Banned Patterns:**
+- `Co-authored-by: ... <noreply@anthropic.com>` — Prevents Anthropic co-authorship
+- `Generated with [Claude Code]` — Rejects Claude AI-generated content in PR description
+
+**Validation:**
+- Mirrors the repository's "No Claude on main" ruleset rules
+- Posts sticky comment on PR if banned content detected
+- Updates comment when issue is fixed
+- Graceful fallback for fork PRs with restricted tokens (falls back to job summary)
 
 ### PR Description Requirements
 
@@ -656,21 +687,6 @@ LangChain uses **Semantic Versioning** with **PEP 440** normalization:
 - Note in PR description: "Breaking change: ..."
 - Include migration path for users
 - Add to release notes explicitly
-
----
-
-## Matrix Testing & Performance Benchmarks
-
-### CodSpeed Benchmarks
-
-For performance-critical packages, the `build` job includes CodSpeed benchmark configurations:
-
-- **libs/core**: Tested with walltime mode (default CPU simulation too slow)
-- **libs/partners/fireworks**: Walltime mode (~328s under CPU simulation)
-- **libs/partners/openai**: Walltime mode (6 benchmarks, ~6 min under CPU simulation)
-- Other packages: CPU simulation mode
-
-Each package runs benchmarks on Python 3.13 with `uv run pytest --benchmark-compare ...`.
 
 ---
 

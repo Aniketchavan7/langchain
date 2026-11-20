@@ -1,11 +1,13 @@
 ---
 type: "Workflow"
-title: "Middleware: Intercepting and Modifying Execution"
-description: "Middleware composability in LangChain agents: request/response interceptors that modify model execution, validate inputs, cache prompts, and add features. Covers composition order, writing custom middleware, and partner-specific middleware."
-tags: ["agents", "middleware", "composition", "hooks", "extensibility", "request-handling", "validation", "feature-composition"]
+title: "Middleware: Pre/Post Processing and Interrupts"
+description: "Middleware architecture for agents: request/response interceptors and lifecycle hooks that transform execution, control state, validate inputs, and pause for human review via LangGraph interrupts. Covers composition, state management, interrupt patterns, and human-in-the-loop approval."
+tags: ["agents", "middleware", "composition", "hooks", "extensibility", "request-handling", "validation", "feature-composition", "interrupts", "human-in-the-loop", "state-management"]
 sources:
   - id: openwiki-source-07e634f5cd5f00c636010306
     resource: repo://libs/langchain_v1/langchain/agents/middleware/__init__.py
+  - id: openwiki-source-bc95cc8fff4e07f74e50ce8b
+    resource: repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py
   - id: openwiki-source-219798683681ccdced950f4d
     resource: repo://libs/langchain_v1/langchain/agents/middleware/tool_error.py
   - id: openwiki-source-03e8ca0eebe37feda8566793
@@ -20,20 +22,21 @@ sources:
     resource: repo://libs/partners/anthropic/langchain_anthropic/middleware/file_search.py
   - id: openwiki-source-c62e502917422540257fa9b7
     resource: repo://libs/partners/anthropic/langchain_anthropic/middleware/prompt_caching.py
-generated: { by: "openwiki/0.5.0", at: "2026-11-06T08:17:28.425Z" }
+generated: { by: "openwiki/0.5.0", at: "2026-11-20T08:17:03.730Z" }
 verified:
   - by: openwiki/0.5.0
-    at: 2026-11-18T08:17:15.497Z
+    at: 2026-11-20T08:17:03.730Z
 ---
 
-# Middleware: Intercepting and Modifying Execution
+# Middleware: Pre/Post Processing and Interrupts
 
-Middleware in LangChain agents provides a composable system for intercepting and customizing agent behavior at multiple execution phases. Middleware enables cross-cutting concerns—logging, validation, caching, retries, security checks, tool control, and feature composition—without modifying core agent logic.
+Middleware in LangChain agents provides a composable system for intercepting and customizing agent behavior at multiple execution phases. Middleware enables cross-cutting concerns—logging, validation, caching, retries, security checks, tool control, human approval, and feature composition—without modifying core agent logic.
 
 Middleware enables two fundamental patterns:
 
-- **Request/response interceptors**: Pre-processing (modify messages/tools), post-processing (transform output), and conditional execution (retry, cache, short-circuit)
-- **Observational middleware**: Logging, metrics, tracing, and debugging without changing execution behavior
+- **Pre/Post processing interceptors**: Lifecycle hooks that run before/after agent steps, modify messages/tools, and return state updates or control flow commands
+- **Request/response interceptors**: Wrapper handlers that intercept actual LLM and tool invocations with full control: retries, caching, request modification, and conditional execution
+- **Interrupt-driven approval**: LangGraph-based interrupts that pause execution for human review, allowing approval, editing, or rejection of tool calls before execution resumes
 
 ## Middleware Definition and Architecture
 
@@ -41,8 +44,9 @@ Middleware is composable and stackable. Each middleware intercepts execution at 
 
 - **Lifecycle hooks** (`before_agent`, `after_agent`, `before_model`, `after_model`): Execute at state transition boundaries, allowing state inspection and modification
 - **Wrapper handlers** (`wrap_model_call`, `wrap_tool_call`): Intercept actual LLM and tool invocations with full control: retry, cache, modify request/response, or skip execution entirely
+- **Interrupt primitives** (via LangGraph): Pause execution to request external decisions (e.g., human review), resume with `Command(resume=...)` once decision is made
 
-Multiple middleware compose automatically, with the first in the list acting as the **outermost layer**, wrapping inner middleware in nested closures. This enables clean layering: each middleware handles one responsibility (retry, validation, logging) and they nest predictably.
+Multiple middleware compose automatically, with the first in the list acting as the **outermost layer**, wrapping inner middleware in nested closures. This enables clean layering: each middleware handles one responsibility (retry, validation, logging, approval) and they nest predictably.
 
 ### Core Base Class
 
@@ -361,7 +365,7 @@ class AgentState(TypedDict, Generic[ResponseT]):
 
 ### Custom State Schemas
 
-Middleware can define custom state by setting `state_schema`:
+Middleware can define custom state by setting `state_schema`. Custom state enables middleware to maintain persistent data across middleware invocations and agent loop iterations:
 
 ```python
 from typing import TypedDict, Annotated
@@ -371,15 +375,29 @@ class MyCustomState(TypedDict):
     messages: Required[Annotated[list[AnyMessage], add_messages]]
     retry_count: NotRequired[int]
     error_log: NotRequired[list[str]]
+    approval_status: NotRequired[dict[str, str]]  # Track approval state
 
 class RetryTrackingMiddleware(AgentMiddleware):
     state_schema = MyCustomState
     
     def before_model(self, state: MyCustomState, runtime) -> dict[str, Any] | None:
-        # Access custom fields
+        # Access and maintain custom fields across calls
         state["retry_count"] = state.get("retry_count", 0) + 1
         return {"retry_count": state["retry_count"]}
+    
+    def after_agent(self, state: MyCustomState, runtime) -> dict[str, Any] | None:
+        # Store summary in state for future access
+        log_msg = f"Completed with {state.get('retry_count', 0)} retries"
+        return {"error_log": state.get("error_log", []) + [log_msg]}
 ```
+
+**State storage mechanics:**
+- State is maintained across all middleware invocations during an agent execution
+- Custom fields are preserved through loops and tool invocations
+- Middleware can read state to access data set by previous middleware
+- State updates from middleware are merged into the graph state automatically
+- For `messages` field, updates are merged (new messages append via `add_messages`)
+- For other fields, updates overwrite (last writer wins within a phase)
 
 When multiple middleware have different schemas, they must be compatible (share common fields). The agent's final state schema is inferred from decorators or the first middleware that specifies one.
 
@@ -475,6 +493,142 @@ sequenceDiagram
     Middleware 3-->>Agent Loop: state updates
     Agent Loop->>Agent Loop: Call model with merged state
 ```
+
+## Interrupts and Human-in-the-Loop
+
+LangChain middleware integrates with LangGraph's interrupt primitives to pause agent execution and request external decisions—typically human review and approval.
+
+### Interrupt Primitives
+
+LangGraph provides the `interrupt()` function to pause execution:
+
+```python
+from langgraph.types import interrupt
+
+# In middleware or agent logic, pause and request data
+value = interrupt(
+    value={"message": "Requires approval", "data": {...}},
+    resumable=True
+)
+# Execution pauses; resume via Command(resume=...)
+```
+
+**Key properties:**
+- Interrupts are only possible with a checkpointer (persistent state)
+- Execution resumes when client sends `Command(resume=...)` with an answer
+- The answer must match the interrupt's `response_schema` (Pydantic validated)
+- After resume, the graph node continues from the interrupt point
+
+### HumanInTheLoopMiddleware: Approval and Editing
+
+The [`HumanInTheLoopMiddleware`][langchain.agents.middleware.HumanInTheLoopMiddleware] pauses execution to request human approval for tool calls before they execute.
+
+**Core pattern:**
+
+```python
+from langchain.agents import create_agent
+from langchain.agents.middleware import HumanInTheLoopMiddleware
+from langgraph.checkpoint.memory import InMemorySaver
+from langchain_core.messages import HumanMessage
+
+agent = create_agent(
+    model,
+    tools=[send_email, delete_file],
+    middleware=[
+        HumanInTheLoopMiddleware(
+            interrupt_on={
+                "send_email": True,            # All decisions allowed
+                "delete_file": {
+                    "allowed_decisions": ["approve", "reject"],
+                },
+            },
+            interrupt_mode="batched",  # or "per_call"
+        )
+    ],
+    checkpointer=InMemorySaver(),
+)
+
+config = {"configurable": {"thread_id": "1"}}
+
+# Invoke 1: Agent runs until tool calls are detected, then pauses
+result = agent.invoke(
+    {"messages": [HumanMessage("Email Alice and delete the report.")]},
+    config,
+)
+# result.interrupts contains the approval requests
+
+# Resume: Send decisions to approve/reject/edit tool calls
+from langgraph.types import Command
+result = agent.invoke(
+    Command(
+        resume={
+            "decisions": [
+                {"type": "approve"},                           # for send_email
+                {"type": "reject", "message": "Keep report"},  # for delete_file
+            ]
+        }
+    ),
+    config,
+)
+```
+
+**Interrupt modes:**
+
+- **`"batched"` (default)**: One interrupt per model turn, listing all gated tool calls. Answer with a `HITLResponse` containing a list of `Decision`s matching the calls by position.
+  
+- **`"per_call"`**: One interrupt per gated tool call, as it starts. Answer each with a single `Decision` keyed by interrupt ID. LangGraph validates the answer against the tool's argument schema before resuming.
+
+**Decision types:**
+
+- **`approve`**: Execute the tool call as requested.
+- **`reject`**: Skip execution; return error message to model.
+  - Optional `message` field: custom rejection reason.
+- **`edit`**: Modify arguments before execution.
+  - `edited_action`: Contains new tool name and args.
+  - Args validated against tool's schema before execution.
+- **`respond`**: Skip execution; return human's response as the tool result (for "ask user" tools).
+  - `message` field: response to return to the model.
+
+**Example: Per-call mode with dynamic description**
+
+```python
+def format_tool_description(tool_call, state, runtime):
+    import json
+    return (
+        f"Tool: {tool_call['name']}\n"
+        f"Arguments:\n{json.dumps(tool_call['args'], indent=2)}\n"
+        f"Context: {state.get('user_query', 'N/A')}"
+    )
+
+middleware = [
+    HumanInTheLoopMiddleware(
+        interrupt_on={
+            "send_email": {
+                "allowed_decisions": ["approve", "edit", "reject"],
+                "description": format_tool_description,
+                "when": lambda req: req.tool_call["args"].get("to") == "admin@company.com",
+            },
+            "delete_file": {
+                "allowed_decisions": ["approve", "reject"],
+                "when": lambda req: req.tool_call["args"].get("path", "").startswith("/etc"),
+            },
+        },
+        interrupt_mode="per_call",
+    )
+]
+```
+
+**State management in HITL:**
+
+The middleware maintains a custom state schema to track edited tool calls:
+
+```python
+class _HumanInTheLoopState(AgentState[ResponseT]):
+    hitl_edited_tool_calls: NotRequired[Annotated[dict[str, Action], PrivateStateAttr]]
+    """Track tool call edits from after_model, so they can be used by wrap_tool_call."""
+```
+
+This state is used internally to apply edits before tool execution.
 
 ## Decorator Factories
 
@@ -747,9 +901,12 @@ LangChain provides production-ready middleware for common needs:
 - **`SummarizationMiddleware`**: Summarize message history to manage context window.
 - **`TodoListMiddleware`**: Track and manage agent-generated task lists.
 
-### Advanced Features
+### Human Review and Interrupts
 
-- **`HumanInTheLoopMiddleware`**: Interrupt execution for human review and approval.
+- **`HumanInTheLoopMiddleware`**: Interrupt execution for human review and approval (batched or per-call mode).
+
+### File Access
+
 - **`FilesystemFileSearchMiddleware`**: Search and retrieve files from the filesystem.
 
 For details, consult the API documentation and use examples in the middleware package.
@@ -937,7 +1094,7 @@ def test_agent_with_middleware():
 
 ## Integration with Agent Factory
 
-Middleware is registered when creating an agent:
+Middleware is registered when creating an agent via [`create_agent`][langchain.agents.create_agent]:
 
 ```python
 from langchain.agents import create_agent
@@ -951,6 +1108,7 @@ agent = create_agent(
         ToolErrorMiddleware(on_error=lambda exc, req: f"Tool error: {exc}"),
         before_model(can_jump_to=["end"])(depth_guard),
     ],
+    checkpointer=InMemorySaver(),  # Required for interrupts
 )
 
 # Use the agent
@@ -963,19 +1121,22 @@ The agent factory:
 3. Merges stream transformers from middleware.
 4. Applies trace policies to appropriate nodes.
 5. Compiles the LangGraph state machine.
+6. Enables checkpointing for interrupt support (if checkpointer is provided).
 
 ## Summary
 
 Middleware provides a clean, composable way to extend agent behavior:
 
-- **Lifecycle hooks** handle state transitions (before/after agent, before/after model).
-- **Wrapper handlers** intercept actual LLM and tool calls with full control.
+- **Lifecycle hooks** handle state transitions (before/after agent, before/after model) with cumulative state updates.
+- **Wrapper handlers** intercept actual LLM and tool calls with full control via nested composition.
+- **Interrupts and approval** pause execution for human review via LangGraph's interrupt primitives and HITL middleware.
+- **State management** persists custom data across middleware invocations via custom state schemas.
 - **Composition** uses nested closures for wrapper handlers; lifecycle hooks run sequentially.
-- **State updates** merge messages (via reducers) and overwrite other fields.
+- **State updates** merge messages (via reducers) and overwrite other fields; order matters.
 - **Decorators** simplify single-hook middleware without subclassing.
 - **Built-in middleware** covers common patterns (retries, limits, human-in-loop, tool selection, error handling).
 - **Partner middleware** unlocks provider features (Anthropic prompt caching, bash tool, file search).
 - **Tracing and observability** are integrated; control verbosity with `trace_policy`.
 - **Testing** follows unit and integration patterns to validate middleware behavior.
 
-This architecture enables modular, testable, and reusable agent customizations across logging, validation, optimization, control flow, and feature composition concerns.
+This architecture enables modular, testable, and reusable agent customizations across logging, validation, optimization, control flow, interrupts, and feature composition concerns.

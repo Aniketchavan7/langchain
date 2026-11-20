@@ -4,6 +4,10 @@ title: "Composability: Chaining & Piping Runnables & Hierarchical Agents"
 description: "Learn how to build complex applications by composing runnables through pipe operators, parallel execution, branching, and fallbacks. Includes composition patterns, type safety, configuration threading, hierarchical agent delegation, middleware stacking, and debugging techniques."
 tags: [composition, runnables, lcel, modular, piping, parallel, branching, fallback, streaming, hierarchical-agents, subagents, middleware, debugging]
 sources:
+  - id: openwiki-source-c52037e7b642f7ac5a7642a8
+    resource: repo://libs/core/langchain_core/language_models/chat_models.py
+  - id: openwiki-source-77dc1fb726463969f9d53658
+    resource: repo://libs/core/langchain_core/messages/ai.py
   - id: openwiki-source-65071982a626569c8820a34b
     resource: repo://libs/core/langchain_core/runnables/__init__.py
   - id: openwiki-source-a1981e868973f6fd7f71e12e
@@ -14,6 +18,8 @@ sources:
     resource: repo://libs/core/langchain_core/runnables/config.py
   - id: openwiki-source-f9f4c1dc4f9cdf80d824ce15
     resource: repo://libs/core/langchain_core/runnables/fallbacks.py
+  - id: openwiki-source-4ff475d7b00540f962384251
+    resource: repo://libs/core/langchain_core/tools/base.py
   - id: openwiki-source-2bb5c49861e72a9099b51970
     resource: repo://libs/langchain_v1/langchain/agents/_subagent_transformer.py
   - id: openwiki-source-71e882e1ac9757ea8e959a7c
@@ -22,10 +28,10 @@ sources:
     resource: repo://libs/langchain_v1/langchain/agents/middleware/tool_selection.py
   - id: openwiki-source-03e8ca0eebe37feda8566793
     resource: repo://libs/langchain_v1/langchain/agents/middleware/types.py
-generated: { by: "openwiki/0.5.0", at: "2026-11-18T08:17:15.497Z" }
+generated: { by: "openwiki/0.5.0", at: "2026-11-20T08:17:03.730Z" }
 verified:
   - by: openwiki/0.5.0
-    at: 2026-11-18T08:17:15.497Z
+    at: 2026-11-20T08:17:03.730Z
 ---
 
 # Composability: Chaining & Piping Runnables & Hierarchical Agents
@@ -641,6 +647,229 @@ router = RunnableBranch(
 
 chain = classifier | router
 ```
+
+## Tool Use in Pipelines
+
+Tools extend Runnable pipelines by enabling models to interact with external systems and perform structured function calls. A tool-use pipeline binds tools to a model, invokes the model, extracts tool calls from the response, executes them, and returns results as messages for further processing.
+
+### Binding Tools to Models
+
+Models implement `bind_tools()` to attach tool schemas and configure tool-calling behavior. `bind_tools()` returns a modified Runnable that encodes tool information into API requests.
+
+```python
+from langchain_openai import ChatOpenAI
+from langchain_core.tools import tool
+
+# Define tools
+@tool
+def get_weather(location: str) -> str:
+    """Get weather for a location."""
+    return f"Sunny, 72°F in {location}"
+
+@tool
+def calculate(expression: str) -> str:
+    """Evaluate a math expression."""
+    return str(eval(expression))
+
+# Bind tools to model
+model = ChatOpenAI(model="gpt-4o-mini")
+bound_model = model.bind_tools(
+    [get_weather, calculate],
+    tool_choice="auto",  # auto, "required", or specific tool name
+)
+```
+
+**Key `bind_tools()` parameters**:
+
+- **`tools`**: List of `BaseTool` instances, Pydantic models, or dicts with tool schemas.
+- **`tool_choice`**: Controls tool selection:
+  - `"auto"` (default): Model chooses whether to call tools.
+  - `"required"` or `"any"`: Force at least one tool call.
+  - `"none"`: Disallow tool calls.
+  - String (tool name): Force a specific tool.
+  - Dict: Provider-specific format (e.g., `{"type": "function", "function": {"name": "search"}}`).
+- **`parallel_tool_calls`** (default `True`): Allow multiple tool calls in one response.
+- **Provider-specific kwargs**: E.g., `strict`, `response_format` (OpenAI); model-specific overrides for `temperature`, `max_tokens`.
+
+**Location**: `repo://libs/core/langchain_core/language_models/chat_models.py#L202-L260`
+
+### Tool Call Extraction and Execution
+
+When a bound model is invoked, it returns an `AIMessage` with `tool_calls` field containing structured tool call objects:
+
+```python
+from langchain_core.messages import AIMessage
+
+response: AIMessage = bound_model.invoke("What's the weather in Paris and 2+2?")
+
+# response.tool_calls = [
+#     {"id": "call_abc123", "name": "get_weather", "args": {"location": "Paris"}},
+#     {"id": "call_xyz789", "name": "calculate", "args": {"expression": "2+2"}}
+# ]
+```
+
+#### Extracting Tool Calls: Runnable Pattern
+
+Tools are typically executed via agents (covered in `/openwiki/workflows/agent-execution.md`), but Runnable pipelines can also extract and execute tool calls:
+
+```python
+from langchain_core.runnables import RunnableLambda
+from langchain_core.tools import ToolException
+from langchain_core.messages import AIMessage, ToolMessage
+
+def execute_tool_calls(message: AIMessage) -> list[ToolMessage]:
+    """Extract tool calls from AIMessage and execute them."""
+    if not message.tool_calls:
+        return []
+    
+    # Map tool name to tool instance
+    tool_map = {"get_weather": get_weather, "calculate": calculate}
+    
+    results = []
+    for tool_call in message.tool_calls:
+        try:
+            tool = tool_map[tool_call["name"]]
+            # Invoke tool with args
+            result = tool.invoke(tool_call["args"])
+            results.append(
+                ToolMessage(
+                    content=result,
+                    tool_call_id=tool_call["id"],
+                    name=tool_call["name"],
+                )
+            )
+        except (KeyError, ToolException) as e:
+            # Return error message
+            results.append(
+                ToolMessage(
+                    content=f"Error: {str(e)}",
+                    tool_call_id=tool_call["id"],
+                    name=tool_call["name"],
+                    is_error=True,
+                )
+            )
+    return results
+
+executor = RunnableLambda(execute_tool_calls)
+```
+
+#### Full Tool-Use Pipeline Example
+
+Compose prompt → model → tool execution → parser:
+
+```python
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.messages import ToolMessage
+
+prompt = ChatPromptTemplate.from_template(
+    "Answer the user's question. Use tools as needed: {query}"
+)
+model = ChatOpenAI(model="gpt-4o-mini")
+bound_model = model.bind_tools([get_weather, calculate])
+
+def collect_tool_results(state: dict) -> dict:
+    """Execute tools and collect results."""
+    messages = state.get("messages", [])
+    if not messages:
+        return state
+    
+    last_message = messages[-1]
+    if not isinstance(last_message, AIMessage) or not last_message.tool_calls:
+        return state
+    
+    # Execute tools (simplified; production uses ToolNode)
+    tool_results = []
+    for tool_call in last_message.tool_calls:
+        # ... execute tool and create ToolMessage ...
+        tool_results.append(...)
+    
+    return {"messages": tool_results}
+
+# Pipeline: prompt → model (with tools) → state management
+tool_pipeline = {
+    "messages": prompt | bound_model,
+}
+
+# In practice, use agents (create_agent) for production tool handling
+# This pattern illustrates the composition structure
+```
+
+**Key behaviors**:
+
+- **Tool Call Structure**: Each tool call is a dict with `{"id": str, "name": str, "args": dict}`.
+- **Validation**: Tool execution validates args against the tool's schema; validation errors are caught and wrapped in error `ToolMessage`.
+- **Result Format**: Tool results are `ToolMessage` objects with `tool_call_id` linking back to the originating call and `is_error` flag for failures.
+- **Streaming**: Tool calls are streamed as soon as they appear in the model's response (token-level streaming), but tool *execution* typically blocks (happens after model completes).
+- **Error Handling**: Tool execution errors are caught and returned as `ToolMessage` with `is_error=True`, allowing the agent loop to retry or recover.
+
+### Structured Output with Tools
+
+For guaranteed structured extraction, use `model.with_structured_output(schema)`, which leverages tool calling under the hood:
+
+```python
+from pydantic import BaseModel, Field
+
+class WeatherResponse(BaseModel):
+    location: str = Field(..., description="City name")
+    temperature: int = Field(..., description="Temp in Fahrenheit")
+    condition: str = Field(..., description="Weather condition")
+
+structured_model = model.with_structured_output(WeatherResponse)
+
+# This invokes the model with a special tool for the schema
+result = structured_model.invoke("What's the weather in Paris?")
+# result is a WeatherResponse instance, guaranteed
+```
+
+**How it works**:
+
+1. `with_structured_output()` calls `bind_tools([schema_tool], tool_choice="required", ...)`
+2. Model is forced to call the tool (no other options)
+3. Response parser extracts the tool call and parses its args into the Pydantic model
+4. Final output is the validated model instance
+
+### Real-World Pattern: Multi-Turn Tool Use
+
+For multi-turn conversations with tool use, maintain a message history and alternate between model and tool execution:
+
+```python
+from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
+
+def tool_use_loop(query: str, max_iterations: int = 5):
+    """Multi-turn tool use until model stops calling tools."""
+    messages = [HumanMessage(content=query)]
+    
+    for iteration in range(max_iterations):
+        # Call model with tools
+        response = bound_model.invoke(messages)
+        messages.append(response)
+        
+        if not response.tool_calls:
+            # Model didn't call tools; done
+            return response.content
+        
+        # Execute all tool calls and collect results
+        tool_results = []
+        for tool_call in response.tool_calls:
+            tool = tool_map[tool_call["name"]]
+            result = tool.invoke(tool_call["args"])
+            tool_results.append(
+                ToolMessage(
+                    content=result,
+                    tool_call_id=tool_call["id"],
+                    name=tool_call["name"],
+                )
+            )
+        messages.extend(tool_results)
+    
+    return "Max iterations reached"
+
+# Usage
+answer = tool_use_loop("What's the weather in Paris? Also calculate 10 * 5.")
+```
+
+**Location**: `repo://libs/core/langchain_core/tools/base.py#L1-L150` (BaseTool), `repo://libs/core/langchain_core/language_models/chat_models.py#L202-L260` (bind_tools)
 
 ## Composability Boundaries
 
@@ -1554,3 +1783,52 @@ class StateUpdatingMiddleware(AgentMiddleware):
 5. **Leverage context variables**: Use `ContextVar` to pass configuration without function parameters.
 6. **Tool selection as middleware**: Use `LLMToolSelectorMiddleware` to filter tools dynamically before model execution, reducing token usage on large tool sets.
 7. **Request interception patterns**: Leverage `wrap_model_call` for retries, caching, request modification; use `wrap_tool_call` for tool-level observability and error handling.
+
+## Beyond Runnables: LangGraph for Stateful Workflows
+
+Runnable composition is powerful for linear and conditionally-branched workflows, but complex scenarios require **state machines** with cycles, human-in-the-loop pauses, and persistent state. **LangGraph** extends LangChain's composition model for these requirements.
+
+### When to Use LangGraph
+
+Runnable composition (`|`, parallel, branch) is suitable for:
+- **Linear flows**: prompt → model → parser
+- **Acyclic routing**: branching and fallbacks
+- **Stateless operations**: each invocation is independent
+
+Transition to **LangGraph** when you need:
+- **Loops and cycles**: Tool-use agents that iteratively call tools, check results, and loop back to the model.
+- **Persistent state**: Conversation memory, graph traversal, or external state stores.
+- **Human interrupts**: Pausing for human review, approval, or input before continuing.
+- **Sub-workflows**: Complex agents composed of smaller agents (hierarchical agents).
+- **Branching with memory**: Decisions that depend on accumulated state, not just current input.
+
+### Agents as LangGraph StateGraphs
+
+LangChain agents created via `create_agent()` are compiled LangGraph `StateGraph` instances. They implement the looping pattern internally:
+
+1. **Model node**: Calls the model with current messages and tools.
+2. **Tools node**: Executes tool calls and returns results.
+3. **Decision/routing**: Checks for more tool calls; loops if present, terminates if not.
+4. **Middleware hooks**: Inserted at each node for custom behavior.
+
+```python
+from langchain.agents import create_agent
+
+# This is a StateGraph internally
+agent = create_agent(
+    model="openai:gpt-4o",
+    tools=[tool1, tool2],
+)
+
+# Agents support streaming state and tracing subagent boundaries
+for chunk in agent.stream({"messages": [input_message]}):
+    print(chunk)
+```
+
+For simple tool-use and hierarchical multi-agent systems, `create_agent()` and Runnable composition (with tool use) are sufficient. For highly customized control flow, persistent storage, or complex multi-party interactions, write a custom LangGraph directly (see `/openwiki/workflows/agent-execution.md` for detailed LangGraph integration patterns).
+
+### Resources
+
+- **LangGraph documentation**: https://langchain-ai.github.io/langgraph/
+- **Agent execution workflows**: `/openwiki/workflows/agent-execution.md` (detailed LangGraph patterns with agents)
+- **Hierarchical agents example**: `/openwiki/workflows/composability.md#hierarchical-agent-composition`

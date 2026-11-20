@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:85dc1c9daa2eb876a61cc06b243e2a2f5255e436e250a0486b3e9ad216ce08d5",
+  "pageVersion": "sha256:70a8e8994a0cd5cd8eb702dadb2f048bb3f72ad38fc61052518bf75d81354497",
   "claims": [
     {
       "id": "claim_fc612ca95e764c84b4bd1c6e12a8536a",
@@ -207,10 +207,62 @@
           "version": "repo-lines-v1:sha256:08889c002c3ac381c46a33e05ca3081431a4eaa94ebaf8fb7844d44b072839c9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyOTk3ZjYwNTQ2ZDE1MzY2Y2NiZTlhMzVmOWI4ZDI3ZDE3NGJkODBjMzNmMzFhYjBhYjUzMWVlMGM0MGY5ZTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkYzk0NWE2N2EyNzE1Zjc0Y2Q3Mjk0Yzk1NDJkMzg2NWVlMzAxY2YzNTFmNzEwODg5Njg3ZDNkMmE3MzFlMDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQwZTIyM2QzNzA5ZGVkMTdkY2I4YTZiZmEzNjYxNmFlMzZiYmQ4ZTExNmFjNDgyYjU4ZGMzMTQ5NDZjM2ZiMGEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_e39f435ac8ab4311b5a97d928c58edc9",
+      "statement": "HumanInTheLoopMiddleware supports two interrupt modes: 'batched' (one interrupt per model turn listing all gated calls) and 'per_call' (one interrupt per gated tool call with typed response schema); interrupts use LangGraph's interrupt primitives with checkpointer for persistence and resume via Command(resume=...).",
+      "evidence": [
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L402-L490",
+          "version": "repo-lines-v1:sha256:1820104b26e7817542067393b5ae091043a13358c86e10281d092fb2698e3f12:eyJzZWxlY3RlZExpbmVDb3VudCI6ODksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxNWRmMmI2MDc2NjFmM2ZhMjRlMzNjMjA2YTJlMTU2YmUyNmMwZDJmOWZkNTVjOGFlZTk0OTBiYmIxN2Y5NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc1ZWZmOThjODJiNjI2Y2JlOTZmN2M3MmEyNTlmMDBkYjMwNzhiNTU0ZmQ4N2M3YjM2M2VhNzMyZDQ5MTkwZjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY5ZDVlZmQ1YWE4NDExNDQ1MWRlNTZjNDIwZTJlNjE4YzliNTQ0NGU3ZmEzNDI3YWQ1OThmNzFlNmZjMzQ0MTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNmNmM0OTgyYjliZTgzYTgzM2Q0YTk2NjMxOTQyNjZkM2U3NGZhY2QyZmMzYTBjNTllNmI4MTkwMTliNzQ3NWIifQ"
+        },
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L495-L577",
+          "version": "repo-lines-v1:sha256:61d562799ec8448a0398921c463d7f2c49357f9435100800e299f214b2c3d226:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmZDdhMDdhODNkZDE5OTZmYjUxNjg0YjQyYWVjYWY0ZTkwZmI3OGJhNzIzMGU1NDJlZDdiZDAxZDQyMzAxYmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwZGUyNTg3MTk2MTQ5MjYwNzFjOGZiMTlmZDg2NjE1MDU1NWYxYjAxMzU0ZjhjZDE2MDNhMTA5YTdkZGFlNDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIyYmU4MzFjMGViMWFhNDE1MTVlOTE0ZDc5NmFjMjE3NDRjMjRhODBmYzUzNjYxZmY0NGEwM2M3NWJmN2RhYzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJiYTFhMTkxOTE4ODJjZmY4MGUxYzU4NWM4YzBhN2JlNzRmNjRhMzQyNjE3Njg2MjhlN2E2NDZjOTgwOTQ1ZmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7173b499b25046799349887b5b917b4c",
+      "statement": "HumanInTheLoopMiddleware decisions include: approve (execute as requested), reject (skip with optional error message), edit (modify arguments before execution), and respond (skip tool and return human's message as result); decision schemas are dynamically built per tool for 'per_call' mode.",
+      "evidence": [
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L117-L167",
+          "version": "repo-lines-v1:sha256:d236ebadb56c242ebc04a4370b17a06917ac080e2cd77e3afcf12955c205ee8d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjNTJhYTMyZjM0NTQ0NDUxZjNlZDc5MzJhYjNkMzZkY2ViNTM0NzE0OTYyZWU2N2JiNDE4NzJlOWJjMGY0MWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4MTBkY2I4MDRjMmQwMDc4MTFlZWYzYzUzNzNmZTQ4NWI3ZmZkZGMxNzU3OWU2MjZkYTAxMGMwZTEwOGYwMTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyZDQ2MTY1MDUwYzljNjkzNzJiNDlmM2VkNzM2YmM4MDhhYmYxZmMxMjllNTVjNGNiY2ExZjZjODgyZjg1YWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcwOGYyMTM0MGNmNmU0NzllNzg4Zjk1MDUwMDE2ZDc3MzExZDg0MGUzN2IxMzIxOWY0ZjQ0NTA1NTdlMDE0YzcifQ"
+        },
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py#L237-L266",
+          "version": "repo-lines-v1:sha256:536f9a86125062f04f674b652a15aca3f882c2f7e945ee671ff4e6a54b26a1c5:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkYmE5NmY1Y2YyZTY5YjQ5YWRhYWY2MjU0ZGMxMjk1MWRkODk3MjEyMjU4OTIwZWIzZjRkNmY3MTJjMWQyYWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkMzc2YmEzYTQzMTJmZTQwNmYyNmUyMDQxNGJiYjk0NmI5MTRhZjZkNTRmYjJkOGFkZjE1NDY4OGQ5MTMwNzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNmNWUwNzkyY2EzMDhlYTRlMDU2NjExNTgxMWQ0MGU4NTg4ZTFhMTUyNDdlYTUzNDVlOGVkZGYxMjkwNTQ2YWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_55419977e9ca4908af4f1f4016a8b5c8",
+      "statement": "Middleware maintains state across invocations via custom state_schema TypedDict fields; state persists through middleware composition, agent loops, and tool invocations, allowing middleware to read data set by prior middleware and write data for downstream access.",
+      "evidence": [
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/types.py#L351-L370",
+          "version": "repo-lines-v1:sha256:6341ae8ca446ca57aee55bd0032315147777efbe4703f1942fb216a34a7534dd:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhY2VkMmY4NGViMmFmMmUxMDNkMjBjYjAwY2NmZmM5ZjcyNzZiZTFlN2U3N2Q3ZTc0NjNlOGY1YzdkYTYzMTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ1NTA5ZTcyNDIwZjVjNzRkZGNjMmJhNmJmOTcyNmNmODI3ODA2MzliMzE3ZTUyMzA2ODgzYjdmMjQ5MjYyZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5YTEyNTZkMDkxOGM3ZWJkYWYzNjhjNTczN2NjMjY4MTVhYmVhNWUwNmVmYTRlMzllNmM3NTc2N2Q4ZDQ4ZDYifQ"
+        },
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/types.py#L399-L423",
+          "version": "repo-lines-v1:sha256:0e07f222562c22ccb2475eb02915b93d250251cab7214f2fa4df0047a31fd678:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwMGI3YjM1Y2Q0YWMxM2RiMTVkYTFhZmVlZjFhNjkzYmYzMmI2ZmRiMzkxY2QyZjAwNjljYTc1N2MyZTI1MmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2YTcxNTI1NzJlZTg0ZjEwOTA2Yzc0YjlmMmE5MjQzNGRkYWIwZTNjNDI4MTNiMDRlNTk3ZWZjZWM5NTFiMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU1YzNhMmRkYTQ4MDljYTBhNTI0NjU5ZTkxZDY0NjA2ZmI1ZTRkM2IyODg1NDcwNzMxNTI3YTkxNWU5MzFiMDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM4OTdiNmEyNDlmNzM2ZmU5NGUyOWU1Y2MxNDBjOTNhNDM0Zjg3MTc1OTY4NzdiMWFmOTA1YTQxYjYxM2M2YjIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_104213148ab04c4dbc4e785e00886dac",
+      "statement": "State updates from middleware hooks merge for the 'messages' field via add_messages reducer; non-message fields overwrite when updated (last writer wins); outermost middleware updates override inner ones for non-message fields.",
+      "evidence": [
+        {
+          "resource": "repo://libs/langchain_v1/langchain/agents/middleware/types.py#L351-L370",
+          "version": "repo-lines-v1:sha256:6341ae8ca446ca57aee55bd0032315147777efbe4703f1942fb216a34a7534dd:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhY2VkMmY4NGViMmFmMmUxMDNkMjBjYjAwY2NmZmM5ZjcyNzZiZTFlN2U3N2Q3ZTc0NjNlOGY1YzdkYTYzMTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ1NTA5ZTcyNDIwZjVjNzRkZGNjMmJhNmJmOTcyNmNmODI3ODA2MzliMzE3ZTUyMzA2ODgzYjdmMjQ5MjYyZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5YTEyNTZkMDkxOGM3ZWJkYWYzNjhjNTczN2NjMjY4MTVhYmVhNWUwNmVmYTRlMzllNmM3NTc2N2Q4ZDQ4ZDYifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.0",
-    "at": "2026-11-18T08:17:15.497Z"
+    "at": "2026-11-20T08:17:03.730Z"
   }
 }

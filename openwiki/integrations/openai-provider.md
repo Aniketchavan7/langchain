@@ -1,20 +1,20 @@
 ---
-type: "Reference"
-title: "OpenAI Provider: ChatOpenAI Implementation"
-description: "Deep dive into the ChatOpenAI implementation: API client setup, message translation, tool handling, structured output, streaming, and Azure support."
-tags: ["chat-model", "openai", "tool-calling", "structured-output", "vision", "streaming", "partner-pattern", "azure"]
+type: "Integration Guide"
+title: "OpenAI Provider Integration"
+description: "In-depth guide to the OpenAI LangChain integration: chat models, feature support, Responses API, reasoning models, and error handling."
+tags: ["chat-model", "openai", "tool-calling", "structured-output", "vision", "streaming", "partner-pattern", "azure", "reasoning"]
+verified:
+  - by: openwiki/0.5.0
+    at: 2026-11-20T08:17:03.730Z
 sources:
   - id: openwiki-source-738512768ef81ae009b097ac
     resource: repo://libs/partners/openai/langchain_openai/chat_models/base.py
   - id: openwiki-source-b65307f1d05bd74532af2eee
     resource: repo://libs/partners/openai/langchain_openai/decisions/base.py
-generated: { by: "openwiki/0.5.0", at: "2026-11-16T08:30:18.041Z" }
-verified:
-  - by: openwiki/0.5.0
-    at: 2026-11-18T08:17:15.497Z
+generated: { by: "openwiki/0.5.0", at: "2026-11-20T08:17:03.730Z" }
 ---
 
-# OpenAI Provider Implementation
+# OpenAI Provider Integration
 
 The OpenAI integration (`langchain-openai`) provides production-ready implementations of LangChain chat models, embeddings, and decision systems that target the official [OpenAI API specifications](https://github.com/openai/openai-openapi). The integration demonstrates the partner pattern for adapting a complex, multi-API provider into LangChain's unified abstractions.
 
@@ -24,7 +24,7 @@ The OpenAI package contains three main components:
 
 1. **Chat Models** (`ChatOpenAI`, `BaseChatOpenAI`): The primary LLM interface implementing `BaseChatModel`.
 2. **Decisions API** (`OpenAIDecisions`): A specialized runnable for typed question-answering.
-3. **Embeddings** (`OpenAIEmbeddings`, `AzureOpenAIEmbeddings`): Text embedding implementations (not covered here).
+3. **Embeddings** (`OpenAIEmbeddings`, `AzureOpenAIEmbeddings`): Text embedding implementations.
 
 The chat model hierarchy is:
 - `BaseChatOpenAI`: Abstract base supporting both Chat Completions and Responses APIs
@@ -156,24 +156,24 @@ The OpenAI integration resolves API keys through a multi-step process:
 from langchain_openai import ChatOpenAI
 
 # Option 1: Environment variable (OPENAI_API_KEY)
-model = ChatOpenAI(model="gpt-4.1-mini")
+model = ChatOpenAI(model="gpt-4o-mini")
 
 # Option 2: String parameter
-model = ChatOpenAI(model="gpt-4.1-mini", api_key="sk-...")
+model = ChatOpenAI(model="gpt-4o-mini", api_key="sk-...")
 
 # Option 3: Sync callable
 def get_api_key() -> str:
     # Custom logic to retrieve key
     return "sk-..."
 
-model = ChatOpenAI(model="gpt-4.1-mini", api_key=get_api_key)
+model = ChatOpenAI(model="gpt-4o-mini", api_key=get_api_key)
 
 # Option 4: Async callable
 async def get_api_key_async() -> str:
     result = await some_async_fetch()
     return result.key
 
-model = ChatOpenAI(model="gpt-4.1-mini", api_key=get_api_key_async)
+model = ChatOpenAI(model="gpt-4o-mini", api_key=get_api_key_async)
 ```
 
 ### Client Initialization
@@ -314,6 +314,8 @@ def _convert_dict_to_message(_dict: Mapping[str, Any]) -> BaseMessage:
 - **Invalid tool calls**: If parsing fails, wrapped in `InvalidToolCall` for graceful error handling.
 - **Empty content**: Content of `None` from OpenAI (typical for tool calls) is normalized to `""`.
 - **Additional kwargs**: Preserves provider-specific fields like audio IDs and developer role markers.
+- **Anthropic message format compatibility**: The integration converts Anthropic-style image blocks (with `source` field) to OpenAI format automatically.
+- **v1 to chat-completions conversion**: AIMessage responses are converted from v1 format to chat-completions format via `_convert_from_v1_to_chat_completions()` when needed.
 
 ## Vision/Media Support
 
@@ -413,7 +415,7 @@ def get_weather(location: str, unit: str = "celsius") -> str:
     """Get the weather at a location."""
     return f"Sunny, 25°{unit}"
 
-model = ChatOpenAI(model="gpt-4.1-mini")
+model = ChatOpenAI(model="gpt-4o-mini")
 model_with_tools = model.bind_tools([get_weather])
 
 # Or from a Pydantic class directly
@@ -577,7 +579,7 @@ class Joke(BaseModel):
     punchline: str = Field(description="Punchline")
     rating: int = Field(ge=1, le=10, description="Rating 1-10")
 
-model = ChatOpenAI(model="gpt-4.1-mini", temperature=0)
+model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 structured_model = model.with_structured_output(Joke)
 
 joke = structured_model.invoke("Tell me a joke about cats")
@@ -740,49 +742,127 @@ for chunk in structured_model.stream("Tell me a joke"):
     print(chunk)
 ```
 
-## Decision Patterns and Model-Specific Features
+## Reasoning Models
 
-The `/decisions/` submodule provides `OpenAIDecisions`, a specialized runnable for OpenAI's Decisions API. This API answers typed questions about text or images, returning probabilities, confidence scores, and token usage.
+OpenAI's reasoning models (o1, o3 families) use extended thinking to solve complex problems. These models have special requirements and behaviors:
 
-### OpenAIDecisions
+### Model Variants
+
+- **o1-preview**: Reasoning model with extended thinking
+- **o3**: Latest reasoning model series with configurable reasoning effort
+- **o3-mini**: Smaller reasoning model for faster inference
+
+### Reasoning Effort and Temperature
+
+Reasoning models have specific parameter constraints:
 
 ```python
-from langchain_openai.decisions import (
-    OpenAIDecisions,
-    Predicate,
-    Choice,
-    Score,
+# o1 and o3 models default temperature=1 if not provided
+model = ChatOpenAI(model="o1-preview")  # Automatically sets temperature=1
+
+# o3 (non-chat) with reasoning has temperature constraints
+model = ChatOpenAI(
+    model="o3",
+    reasoning={"effort": "medium"}  # Can be "low", "medium", "high", or None
 )
 
-decisions = OpenAIDecisions(model="gpt-6-luna")
-response = decisions.invoke({
-    "input": "Stripe has failed for three days. Help ASAP.",
-    "questions": {
-        "department": Choice(
-            instructions="Which team should handle this?",
-            choices={
-                "billing": "Payment or subscription issues",
-                "technical": "Product bugs or integration failures"
-            }
-        ),
-        "urgent": Predicate(instructions="Is this request urgent?"),
-        "frustration": Score(
-            instructions="Customer frustration level",
-            levels=["Calm", "Concerned", "Angry"]
-        )
-    }
-})
-
-print(response.answers["department"].probabilities)  # {"billing": 0.15, "technical": 0.85}
-print(response.answers["urgent"].probability)  # 0.92
-print(response.answers["frustration"].score)  # 2 (Angry)
+# o3-chat supports full temperature range
+model = ChatOpenAI(
+    model="o3-chat",
+    temperature=0.5,
+    reasoning={"effort": "high"}
+)
 ```
 
-Configuration mirrors `ChatOpenAI`:
-- `api_key`: Auto-loaded from `OPENAI_API_KEY` or provided explicitly
-- `base_url`: Optional proxy or custom endpoint
-- `organization`: OpenAI org ID
-- `timeout`, `max_retries`: Client behavior tuning
+**Temperature validation:**
+- **o1 models**: Default to `temperature=1` if not provided; this is the only allowed value.
+- **gpt-5 (non-chat) models with reasoning**: Only `temperature=1` is supported (unless `reasoning_effort='none'`).
+- **gpt-5-chat models**: Support full temperature range.
+
+### Reasoning Parameters
+
+```python
+model = ChatOpenAI(
+    model="o3",
+    reasoning={
+        "effort": "medium",           # Reasoning budget: "low", "medium", "high"
+        "summary": "concise"           # Summary style: "auto", "concise", "detailed"
+    },
+    verbosity="medium"                 # Controls output verbosity: "low", "medium", "high"
+)
+```
+
+### Thinking/Reasoning Block Handling
+
+Reasoning model outputs include thinking blocks (internal reasoning) alongside the final answer. These are automatically parsed:
+
+```python
+response = model.invoke("Solve this complex problem...")
+# response includes:
+# - content: Final answer text
+# - additional_kwargs["reasoning"]: Reasoning block dict
+# - response_metadata: Metadata including reasoning budget used
+```
+
+For streaming, reasoning content arrives in separate chunks before the final answer.
+
+## Responses API and Chat Completions API Routing
+
+OpenAI provides two generation APIs:
+
+1. **Chat Completions API** (`/v1/chat/completions`): Traditional chat interface.
+2. **Responses API** (`/v1/responses`): Advanced features (reasoning, vision, mid-conversation tools, conversation state).
+
+The model automatically routes requests:
+
+```python
+def _use_responses_api(self, payload: dict) -> bool:
+    """Determine if Responses API should be used."""
+    # Routes based on:
+    # 1. Explicit use_responses_api=True/False
+    # 2. Model name (gpt-5+, codex models prefer Responses)
+    # 3. Parameters like 'reasoning', 'include', 'store', 'truncation'
+    # 4. OpenAI profile data
+```
+
+**Responses API is used when:**
+- Model is GPT-5 series or "codex" series.
+- `use_responses_api=True` is set.
+- Advanced parameters (`reasoning`, `context_management`, `include`, `truncation`, `store`) are specified.
+- Configuration explicitly requires it.
+
+**Chat Completions API is default for:**
+- GPT-4, GPT-4o, and older models.
+- Basic chat scenarios.
+
+**Responses API Payload Structure:**
+
+The Responses API uses a different request format with input items and store/truncation options:
+
+```python
+# Responses API payload structure
+{
+    "model": "gpt-5.5",
+    "input": [
+        {"type": "message", "role": "user", "content": "..."},
+        {"type": "message", "role": "assistant", "content": "..."}
+    ],
+    "store": True,  # Allow OpenAI to store responses
+    "truncation": "auto",  # Auto-truncate if needed
+    "context_management": [...],  # Context compaction config
+    "reasoning": {"effort": "medium"},  # Reasoning config
+}
+```
+
+Manual override:
+
+```python
+# Force Chat Completions API
+model = ChatOpenAI(model="gpt-5.5", use_responses_api=False)
+
+# Force Responses API
+model = ChatOpenAI(model="gpt-4o", use_responses_api=True)
+```
 
 ## Disabled Parameters
 
@@ -844,45 +924,6 @@ except openai.APIError as e:
     _handle_openai_api_error(e)  # Routes to appropriate LangChain exception
 ```
 
-## Responses API and Chat Completions API Routing
-
-OpenAI provides two generation APIs:
-
-1. **Chat Completions API** (`/v1/chat/completions`): Traditional chat interface.
-2. **Responses API** (`/v1/responses`): Advanced features (reasoning, vision, mid-conversation tools, conversation state).
-
-The model automatically routes requests:
-
-```python
-def _use_responses_api(self, payload: dict) -> bool:
-    """Determine if Responses API should be used."""
-    # Routes based on:
-    # 1. Explicit use_responses_api=True/False
-    # 2. Model name (gpt-5+, codex models prefer Responses)
-    # 3. Parameters like 'reasoning', 'include', 'store', 'truncation'
-    # 4. OpenAI profile data
-```
-
-**Responses API is used when:**
-- Model is GPT-5 series or "codex" series.
-- `use_responses_api=True` is set.
-- Advanced parameters (`reasoning`, `context_management`, `include`, `truncation`, `store`) are specified.
-- Configuration explicitly requires it.
-
-**Chat Completions API is default for:**
-- GPT-4, GPT-4o, and older models.
-- Basic chat scenarios.
-
-Manual override:
-
-```python
-# Force Chat Completions API
-model = ChatOpenAI(model="gpt-6", use_responses_api=False)
-
-# Force Responses API
-model = ChatOpenAI(model="gpt-3.5-turbo", use_responses_api=True)
-```
-
 ## Configuration and Operations
 
 ### Key Constructor Parameters
@@ -890,7 +931,7 @@ model = ChatOpenAI(model="gpt-3.5-turbo", use_responses_api=True)
 ```python
 model = ChatOpenAI(
     # Model selection
-    model="gpt-4.1-mini",  # Required
+    model="gpt-4o-mini",  # Required
     
     # API authentication
     api_key="sk-...",  # Or callable; defaults to OPENAI_API_KEY
@@ -906,7 +947,7 @@ model = ChatOpenAI(
     seed=42,  # For reproducibility
     
     # Advanced features
-    reasoning="medium",  # For Responses API reasoning models
+    reasoning={"effort": "medium"},  # For reasoning models
     use_responses_api=True,  # Force Responses API
     output_version="responses/v1",  # Format output
     
@@ -940,7 +981,7 @@ response = model.invoke(messages, prompt_cache_key="tenant:123:support-v1")
 
 # Cache options
 model = ChatOpenAI(
-    model="gpt-5.6-sol",
+    model="gpt-4o",
     prompt_cache_options={
         "mode": "explicit",  # or "implicit"
         "ttl": "30m"
@@ -981,6 +1022,50 @@ tokens = model.get_num_tokens_from_messages(
 ```
 
 Uses `tiktoken` internally with OpenAI's token encoding for the model.
+
+## Decision Patterns and Model-Specific Features
+
+The `/decisions/` submodule provides `OpenAIDecisions`, a specialized runnable for OpenAI's Decisions API. This API answers typed questions about text or images, returning probabilities, confidence scores, and token usage.
+
+### OpenAIDecisions
+
+```python
+from langchain_openai.decisions import (
+    OpenAIDecisions,
+    Predicate,
+    Choice,
+    Score,
+)
+
+decisions = OpenAIDecisions(model="gpt-6-luna")
+response = decisions.invoke({
+    "input": "Stripe has failed for three days. Help ASAP.",
+    "questions": {
+        "department": Choice(
+            instructions="Which team should handle this?",
+            choices={
+                "billing": "Payment or subscription issues",
+                "technical": "Product bugs or integration failures"
+            }
+        ),
+        "urgent": Predicate(instructions="Is this request urgent?"),
+        "frustration": Score(
+            instructions="Customer frustration level",
+            levels=["Calm", "Concerned", "Angry"]
+        )
+    }
+})
+
+print(response.answers["department"].probabilities)  # {"billing": 0.15, "technical": 0.85}
+print(response.answers["urgent"].probability)  # 0.92
+print(response.answers["frustration"].score)  # 2 (Angry)
+```
+
+Configuration mirrors `ChatOpenAI`:
+- `api_key`: Auto-loaded from `OPENAI_API_KEY` or provided explicitly
+- `base_url`: Optional proxy or custom endpoint
+- `organization`: OpenAI org ID
+- `timeout`, `max_retries`: Client behavior tuning
 
 ## Architecture: Request Flow
 

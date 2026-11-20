@@ -16,10 +16,10 @@ sources:
     resource: repo://libs/partners/openai/pyproject.toml
   - id: openwiki-source-86b6689572ac828885d7d4b0
     resource: repo://libs/partners/README.md
-generated: { by: "openwiki/0.5.0", at: "2026-11-06T08:17:28.425Z" }
+generated: { by: "openwiki/0.5.0", at: "2026-11-20T08:17:03.730Z" }
 verified:
   - by: openwiki/0.5.0
-    at: 2026-11-18T08:17:15.497Z
+    at: 2026-11-20T08:17:03.730Z
 ---
 
 # Partner Pattern: Provider Integration Framework
@@ -393,9 +393,10 @@ openai.RateLimitError → OpenAIRateLimitError(ModelRateLimitError)
 openai.APIConnectionError → OpenAIConnectionError(ModelConnectionError)
 openai.APITimeoutError → OpenAITimeoutError(ModelTimeoutError)
 openai.NotFoundError → OpenAIModelNotFoundError(ModelNotFoundError)
+openai.BadRequestError (context overflow) → OpenAIContextOverflowError(ContextOverflowError)
 ```
 
-Subclasses inherit from both the provider's exception and LangChain's abstract class, allowing framework code to catch errors generically while preserving provider context.
+Subclasses inherit from both the provider's exception and LangChain's abstract class, allowing framework code to catch errors generically while preserving provider context. This enables graceful degradation and error-specific retry logic across all integrations.
 
 ## Model Profiles
 
@@ -421,15 +422,62 @@ if model.profile and model.profile.get("tool_calling"):
     # Use bind_tools
 ```
 
+## Response Metadata & Finish Reason
+
+Each `AIMessage` returned by a partner contains metadata in two places:
+
+### usage_metadata
+
+Structured token accounting (from `langchain_core.messages.ai.UsageMetadata`):
+
+```python
+message.usage_metadata = {
+    "input_tokens": 50,
+    "output_tokens": 10,
+    "total_tokens": 60,
+    "input_token_details": {
+        "audio": None,
+        "cache_read": 0,
+        "cache_creation": 0
+    },
+    "output_token_details": {
+        "audio": None,
+        "reasoning": 5  # For o1/o3 models
+    }
+}
+```
+
+Partners extract token counts from provider responses and normalize them to this schema, handling provider-specific keys (e.g., OpenAI's `prompt_tokens_details.cached_tokens` → `cache_read`, reasoning tokens → `output_token_details.reasoning`).
+
+### response_metadata
+
+Additional provider context stored as a dict on `message.response_metadata`:
+
+- **`finish_reason`** (raw): The provider's native finish reason string (e.g., `"stop"`, `"tool_calls"`, `"length"`)
+- **`normalized_finish_reason`** (standardized): A normalized value from LangChain's unified set: `"stop"`, `"length"`, `"tool_call"`, `"refusal"`, `"other"`
+- **`id`**: Provider-assigned response/message ID
+- **`model_name`**: The model that generated the response
+- **`model_provider`**: The integration name (e.g., `"openai"`, `"anthropic"`)
+- **`headers`**: Raw HTTP response headers (if `include_response_headers=True`)
+- **Provider-specific fields**: Reasoning content (o1 models), logprobs, refusal explanations, audio metadata, etc.
+
+For example, OpenAI maps its `finish_reason` values:
+- `"stop"` → `"stop"` (unless tool calls present, then `"tool_call"`)
+- `"tool_calls"` → `"tool_call"`
+- `"length"` → `"length"`
+- `"content_filter"` → `"other"` (refusal indicated in `additional_kwargs`)
+
+Partners compute `normalized_finish_reason` during response parsing to enable generic error/completion handling.
+
 ## Async Support
 
 Partner implementations should provide native async variants where possible:
 
 - **`_agenerate()`**: Async generation using the provider's async client
-- **`_astream()`**: Async streaming with proper timeout handling
+- **`_astream()`**: Async streaming with proper timeout handling and per-chunk timeouts to prevent indefinite hangs
 - **Callable API keys**: Support `Callable[[], Awaitable[str]]` for async key fetching
 
-OpenAI's async implementation uses `openai.AsyncOpenAI` and includes per-chunk streaming timeouts (`stream_chunk_timeout`) to prevent indefinite hangs on stalled streams.
+OpenAI's async implementation uses `openai.AsyncOpenAI` and wraps streaming with per-chunk timeouts (`stream_chunk_timeout`) to detect stalled streams. Anthropic's implementation uses `anthropic.AsyncAnthropic` for non-blocking I/O.
 
 ## Version & Compatibility Management
 

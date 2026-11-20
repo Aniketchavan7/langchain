@@ -3,9 +3,6 @@ type: API Reference
 title: Streaming API Reference
 description: Core streaming APIs for incremental output delivery via BaseChatModel.stream() and astream(), message chunk composition, ChatModelStream projections, and callback integration.
 tags: [streaming, token-streaming, api-reference, chat-models, callbacks, AIMessageChunk, ChatModelStream]
-verified:
-  - by: openwiki/0.5.0
-    at: 2026-11-13T08:16:35.902Z
 sources:
   - id: openwiki-source-c9313cf42f0120d86b20245f
     resource: repo://libs/core/langchain_core/callbacks/base.py
@@ -15,7 +12,10 @@ sources:
     resource: repo://libs/core/langchain_core/language_models/chat_models.py
   - id: openwiki-source-77dc1fb726463969f9d53658
     resource: repo://libs/core/langchain_core/messages/ai.py
-generated: { by: "openwiki/0.5.0", at: "2026-11-13T08:16:35.902Z" }
+generated: { by: "openwiki/0.5.0", at: "2026-11-20T08:17:03.730Z" }
+verified:
+  - by: openwiki/0.5.0
+    at: 2026-11-20T08:17:03.730Z
 ---
 
 ## Overview
@@ -196,7 +196,7 @@ All inherit from `BaseMessageChunk` and support merging via `+`.
 
 ### ChatModelStream
 
-**Location**: `repo://libs/core/langchain_core/language_models/chat_model_stream.py#L557+`
+**Location**: `repo://libs/core/langchain_core/language_models/chat_model_stream.py#L1200-L1349`
 
 Synchronous wrapper for protocol-level event handling and typed projections. Returned by `BaseChatModel.stream_events(version="v3")`.
 
@@ -271,7 +271,7 @@ for event in stream:
 
 ### AsyncChatModelStream
 
-**Location**: `repo://libs/core/langchain_core/language_models/chat_model_stream.py#L557+`
+**Location**: `repo://libs/core/langchain_core/language_models/chat_model_stream.py#L1356-L1590`
 
 Asynchronous variant of `ChatModelStream`. Returned by `BaseChatModel.astream_events(version="v3")`.
 

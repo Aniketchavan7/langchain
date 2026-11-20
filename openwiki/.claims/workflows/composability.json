@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:11ecd3f93450c32e219ab59eace1a4dca085d97af0f2b0a03b226cc83027c02d",
+  "pageVersion": "sha256:6336b01213c1599581b64cee62d466b9f422479fefdd744308a90cf2c16bd04e",
   "claims": [
     {
       "id": "claim_c1ceff5d6c5d4e22aa8b16a8ce787305",
@@ -211,10 +211,48 @@
           "version": "repo-lines-v1:sha256:41282f9288054a87165c1249402e85c3e2f4217cacd582f6ef8a15f3027c7b7a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTg0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmOWE0ZjBkOTIyOWRmY2E0YWM1MDllNDc0OWQyNGFiZGIxMzg2NGIwYWVmMmIxNWViYmQ5ODlkNTgyNjhjZDUzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIwYjE2MTg3MTIxNzdiOGJkY2RmZTZmMWFkNTEzNzM1ZmQzMjBiZDAzZWQ2MGJkZTQzZmNiY2FkMjYzYmViZTVmIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIzNmNiNWM0MDIzMDhiY2YyYTI4ZjRjNjJkN2NjNGNjZmJiYjg1Nzg1ZjgwZmYyZGUwY2Q0YWJhODY0MTliODQ1In0"
         }
       ]
+    },
+    {
+      "id": "claim_47140cda09d9446b927bf46b723e3d42",
+      "statement": "Tool-use pipelines bind tools to models via bind_tools(), extract tool calls from AIMessage responses, execute them via tool instances, and return ToolMessage results for continued processing. Tool calls are dicts with {\"id\", \"name\", \"args\"} fields; validation and error handling wrap failures in error ToolMessage objects with is_error=True.",
+      "evidence": [
+        {
+          "resource": "repo://libs/core/langchain_core/language_models/chat_models.py#L202-L260",
+          "version": "repo-lines-v1:sha256:262647d56cdd8ebeefdd3e03659b3ded23a54cf6f2dcc1562d44decb92b02772:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlMWNlYTgyNjFmODg1YTk2MGY2NjM4ZGFkMTdjNTg3OTI0NmViODk1MWViMjUzYTM2ZmVlZTcxNjU5YjFjMTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0MjFhZTcyNDM4ZTkyNDQ4ZDQ0MjI4MjMzZWZjNWYyMzI4ZWEwMjk5MmJlMjU1NWU4Y2JkZGU3OTViZjk4NzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRkY2UxMjZmMjVhYTdiNzAwOGVlMTJjOWFiOWQwNzQxNWQ2ZmYwOWE5NzdmYzA5MzMwZDYxYmU1YWQyZTdhZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2MDc2YmZjMmQ4ZjMxYmM3NWU1YzQzZjY3NDk1Yzc0M2QzNWM0YzA3NGE5YTkxZGJhNDZiYTg3ZTMwMzAyODkifQ"
+        },
+        {
+          "resource": "repo://libs/core/langchain_core/messages/ai.py",
+          "version": "repo-file-v1:sha256:6aa23c2e260d8c3c1a78ce75852219c145ce74afca3c970c0ac2eb41610574f1"
+        },
+        {
+          "resource": "repo://libs/core/langchain_core/tools/base.py#L1-L150",
+          "version": "repo-lines-v1:sha256:530e1a390b96500d1090306c27e2dd975a8d3fbb831f2672f85d7602a91fe0f8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkMjFiYjA5Yzk5ODE0MDZkYTYyYjVkMmY2MTNiZWIwYWYwNGNmZTNiYTI4NTIxODZkNDQ3ZTRkYmNhZTFjZjgzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIzMGMxZjE4OGYxNDJlZDdhODI0NjgwYjIwNzE3MmM1NTE5YmM2MTRhNDhmZGE3Y2YxNjdlZGI4ZGRmNzk5NTZjIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJjNDY3YThkMWJmMGRiNzE4NjZkMTZhMDhlNjRiMjA2OGE3OWEwMDhmOWM0ZjNhMTQ2MDYzMGI5YjM0MGUyMjYyIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_eb31418196c24667b8c4b8f6c9a094d7",
+      "statement": "bind_tools() accepts tools (BaseTool, Pydantic model, or dict), tool_choice (auto/required/none/name/dict), parallel_tool_calls (bool), and provider-specific kwargs (strict, response_format, temperature, max_tokens). tool_choice controls whether tools are optional, required, disallowed, or specific. The method returns a Runnable that encodes tools into API requests.",
+      "evidence": [
+        {
+          "resource": "repo://libs/core/langchain_core/language_models/chat_models.py#L202-L260",
+          "version": "repo-lines-v1:sha256:262647d56cdd8ebeefdd3e03659b3ded23a54cf6f2dcc1562d44decb92b02772:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlMWNlYTgyNjFmODg1YTk2MGY2NjM4ZGFkMTdjNTg3OTI0NmViODk1MWViMjUzYTM2ZmVlZTcxNjU5YjFjMTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0MjFhZTcyNDM4ZTkyNDQ4ZDQ0MjI4MjMzZWZjNWYyMzI4ZWEwMjk5MmJlMjU1NWU4Y2JkZGU3OTViZjk4NzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRkY2UxMjZmMjVhYTdiNzAwOGVlMTJjOWFiOWQwNzQxNWQ2ZmYwOWE5NzdmYzA5MzMwZDYxYmU1YWQyZTdhZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2MDc2YmZjMmQ4ZjMxYmM3NWU1YzQzZjY3NDk1Yzc0M2QzNWM0YzA3NGE5YTkxZGJhNDZiYTg3ZTMwMzAyODkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_592d7f6498034d1f9ae7d893caefb553",
+      "statement": "model.with_structured_output(schema) internally calls bind_tools([schema_tool], tool_choice=\"required\"), forcing the model to call a pseudo-tool wrapping the schema. The response parser extracts the tool call and parses its args into the validated Pydantic model instance, guaranteeing structured output.",
+      "evidence": [
+        {
+          "resource": "repo://libs/core/langchain_core/language_models/chat_models.py#L202-L260",
+          "version": "repo-lines-v1:sha256:262647d56cdd8ebeefdd3e03659b3ded23a54cf6f2dcc1562d44decb92b02772:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlMWNlYTgyNjFmODg1YTk2MGY2NjM4ZGFkMTdjNTg3OTI0NmViODk1MWViMjUzYTM2ZmVlZTcxNjU5YjFjMTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0MjFhZTcyNDM4ZTkyNDQ4ZDQ0MjI4MjMzZWZjNWYyMzI4ZWEwMjk5MmJlMjU1NWU4Y2JkZGU3OTViZjk4NzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRkY2UxMjZmMjVhYTdiNzAwOGVlMTJjOWFiOWQwNzQxNWQ2ZmYwOWE5NzdmYzA5MzMwZDYxYmU1YWQyZTdhZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2MDc2YmZjMmQ4ZjMxYmM3NWU1YzQzZjY3NDk1Yzc0M2QzNWM0YzA3NGE5YTkxZGJhNDZiYTg3ZTMwMzAyODkifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.0",
-    "at": "2026-11-18T08:17:15.497Z"
+    "at": "2026-11-20T08:17:03.730Z"
   }
 }

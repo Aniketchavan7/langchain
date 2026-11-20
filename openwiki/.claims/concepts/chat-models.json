@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3e47372e2c47eb6e817a982a168f126cb9d33d49a48bd7979d72e31e0d9eb3b8",
+  "pageVersion": "sha256:b2f1f53871631a09d7de538b18a6ce549fc9883c2c668dd80c1d6928f6b4ebb0",
   "claims": [
     {
       "id": "claim_106c015e2cd54bee94baf1f2020dab90",
@@ -229,10 +229,80 @@
           "version": "repo-lines-v1:sha256:0be3fc985f53288a467651889f2c8495d7a361131c306f7a534148ce4a5fa8fd:eyJzZWxlY3RlZExpbmVDb3VudCI6MjY0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI2ZDAyZmNjYzVhNWFhZDlkMmZkZjc1NmZjN2ZlNjkzNDBmMWQzNzgwMTc0MDE2NjM4MzI0MGMzZWE2YzFmNDRmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1OTA5YTUzYTYxOGQwMjhlMWQzMDAwYzBhN2FiY2VlY2JlNWZiMzdmNGU1MTFlZmU0NjY0M2ZhZDZlNjY4NzJmIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxYWFjOTNhNjQzOWE2NDQxYTAyMTUwYzIyNmQ4MzdmYTI1YTQ2YzI1YTY3NzkzYjQyYjQ2YTVhMjk0ZjhkZTM4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI5ZGYxYTdhNTVlNzBlNDQ2YzhjY2RkYzkxZjRjOWY2ZDg5YTc4ZmVjMDNlZTQyN2U1MTA5MWVkOGRhMmJiYzM5In0"
         }
       ]
+    },
+    {
+      "id": "claim_fdd65c0b20c840d298073dc83bc1fb38",
+      "statement": "Providers set three finish-related fields in response_metadata: finish_reason (raw provider value), normalized_finish_reason (standardized value), and optional finish_state (additional state); the _finish_fields() function applies corrections when tool_calls are present (normalized_finish_reason 'stop' becomes 'tool_call') or when a refusal block is present (normalized_finish_reason becomes 'refusal').",
+      "evidence": [
+        {
+          "resource": "repo://libs/core/langchain_core/language_models/_finish_reason.py#L1-L45",
+          "version": "repo-lines-v1:sha256:39be7efb07c5d2abb8ff9681059121c1b88681a001f08a4afaadf7fadbb30d32:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzZTFiYjVhMmM1NTk5NjI1ODUzZDkyMzQxNTg4MWVjZDc0YWRkNmNlOGM2YzE0NjA2ODQ5NjM5YjkzNjA1ODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwZjkxMWMwMmNjMzQwZGY4YTM3MWFkNWUyZTdhZTU3YWY5NmMwZDI1YTdmNzY5YzMxOTAzYjBiYjQ1MGVmMWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6f5013632c1d470caadc54d2f5fb80b7",
+      "statement": "The compat bridge (chunks_to_events/achunks_to_events) translates ChatGenerationChunk streams into protocol events by: tracking blocks by index across chunks, emitting content-block-delta events for incremental content, and finalizing blocks via finalize_tool_call_chunk() which parses accumulated args (producing tool_call or invalid_tool_call).",
+      "evidence": [
+        {
+          "resource": "repo://libs/core/langchain_core/language_models/_compat_bridge.py#L119-L456",
+          "version": "repo-lines-v1:sha256:e7b4bdeef1b81743f8760b2b3d116fb3339712ffb74d756e034ed483cb84fe1c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzM4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwYWYzMmZmZDU3YjE5OGVmNjFlZmE1MzBhZjcxYWYwZGNiZDRhNmU1Mjc2NTJmYzQxNmUxM2UxMTMzNTYzNDk4IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI3YWYzNmViM2ExZjY2YWYxMjE2MmFjMTYwMjQzNDJiNzBhZmE2ZTNjYjZlOGM1ZjMwMmVlMWQ4OTYzMmY0Yjk1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIwODI2NzZjODg4YzFhNGQ5ZmE3NzJmY2RjMzAyZjc3M2JjNzI5MGVlYmZmOWRhMzZhMzlmNDRjMzIxMTk4Mzg1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJjYWMzOWQ1NWIxYzQwOWFlZTdjMzE4YWU4ZmVlNGYxMjllZTgzNTllYjI3MzY1NzViZWJiODA3MTdhNTM5NjlkIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_a16975ed879d48ba92d6606445b94703",
+      "statement": "V2 protocol events expose content blocks with a strict lifecycle: message-start, content-block-start (index, type, partial metadata), content-block-delta (incremental content), content-block-finish (finalized block), repeated per block, then message-finish; tool_call_chunk becomes tool_call with parsed JSON args or invalid_tool_call on parse failure.",
+      "evidence": [
+        {
+          "resource": "repo://libs/core/langchain_core/language_models/_compat_bridge.py#L205-L456",
+          "version": "repo-lines-v1:sha256:64cbf409d0de6cac9a69dd90293d86e599e8fe49bd4dca5e488f84d2c1900162:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyNzNhYzY1MTQwYmZhYzhiMWZkNGY4NTVjOTAzOWU4MjQ0MzlhYjA1ODVkMjc2YmFmZTBmYjc3MTEyYWYzNzI1IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI3YWYzNmViM2ExZjY2YWYxMjE2MmFjMTYwMjQzNDJiNzBhZmE2ZTNjYjZlOGM1ZjMwMmVlMWQ4OTYzMmY0Yjk1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxM2M4M2RhMDFjOGYzOTI1M2E5YTc1NWJhMzBlNjFjOGMyYzQzMmU2YWVkOWE0NzI2ZjI2MjkxZTU5NGNiNmVmIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJjYWMzOWQ1NWIxYzQwOWFlZTdjMzE4YWU4ZmVlNGYxMjllZTgzNTllYjI3MzY1NzViZWJiODA3MTdhNTM5NjlkIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_d5bc6eff7f0b4b70b0631438101d2715",
+      "statement": "stream_events(version='v3') and astream_events(version='v3') return ChatModelStream/AsyncChatModelStream with typed projections: .text (accumulated text), .reasoning (accumulated reasoning), .tool_calls (accumulated tool calls), .output (final AIMessage); always produces v1-shaped content blocks regardless of output_version setting.",
+      "evidence": [
+        {
+          "resource": "repo://libs/core/langchain_core/language_models/chat_models.py#L150-L161",
+          "version": "repo-lines-v1:sha256:c96bc0fbc5fe068a6d32ff99106e5e341571ce7143dda6fe21adc6361719e506:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlOTVjMDVlMzA0ODUwNDgxNDUyZDRkMzc4YjUyOTc4YTUzNTA1ZjZkODJjOWI5ZTQ3ZmRmODgyMzBmNTJiZTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYwMGUzNjc4NmExNDE3NzZlNWFmOTllZjg1N2FhZTI3ZTVhNTU1YjI4OTA0NTM0ZDc4MjEyNGNmZTAzMGQxODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBjZjQ2Zjc3YjJmMjg5MGYyZGNiYjZjYmY2NjNhZjk2NDUxZTQ5MGUyZGU3MTA5NjMyMDg2ODNmYjk1MTZhZjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6ace653d6027431dba2ff7d4efb0abdd",
+      "statement": "V2 events carry all three finish fields in the message-finish event from response_metadata; cache replay converts cached AIMessage back to protocol events via message_to_events() so finish fields flow consistently; invoke() returns response_metadata unchanged without corrections.",
+      "evidence": [
+        {
+          "resource": "repo://libs/core/langchain_core/language_models/_compat_bridge.py#L527-L560",
+          "version": "repo-lines-v1:sha256:4a46f909465e78e77ec4cfc912dab9591e6f7004acfd5b75fb33594ceaad0f06:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJiZTZiYzFkZjcwYWYyNWE1MzY5ZmU2NWMxNDI1Mjk3NzU1NjE2NmE0NmM2MzM5ZGVkYTUxZDIxMDhjYjBhYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmZTBjMmRkNzIyMzA3OWIxZDQ2ZWY0ZWViYzA0NzhlYzhlNzQ4N2VlYWEzOWExMmNkZjAxODZkMDk3ZGRlODAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA4MjY3NmM4ODhjMWE0ZDlmYTc3MmZjZGMzMDJmNzczYmM3MjkwZWViZmY5ZGEzNmEzOWY0NGMzMjExOTgzODUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFhNjc4ZWZjNzZkNzFiN2YwMWY0ODZjYzBmZWM0ZTQ1YTgyZmM4MTRjNWNlMzQ2MmEwOTkyMjJmMjg5ZmZkY2IifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fe0893847d11476baf1b012e41c3e4f9",
+      "statement": "_ConfigurableModel defers chat model instantiation and applies queued declarative operations (bind_tools, with_structured_output) when _model(config) is called with runtime config, enabling runtime tool binding and provider selection without hardcoding.",
+      "evidence": [
+        {
+          "resource": "repo://libs/langchain_v1/langchain/chat_models/base.py#L663-L722",
+          "version": "repo-lines-v1:sha256:de599cd6a35a94c69d14d128bce9e6d7eca0d95b90cd4934f1440e1c859c08c9:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5MzJlZDgzMDcwMjhjNjk2ZDc1ZDQ4ZjFhZTQ5YjJiOTE4OWY2NDA3NTFlYWU4ZGYxZTMyNzc5ZTI4ZDQ2ODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiZmVlMzE5NzFjZWI2NDNhOTkzNmE1NzZhOWE1N2I1MGVkZmZmNzVjYjE5ZDAxOTk3ZTA5ZjE5Mjc2Njk0MDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyNTE0YmJlNzM5OGY4YTY1MWQ1Zjk1MGNiOGRkOWVhOWJmNjNjYTg3NzRlZjc4YmE4ZmVjZmZiNTk5MTRiNzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE0NWU5OTI4N2RlZWUwYjc1Y2Q4MzVkNjRhYjE4NWMzMjlkZjVhZjZhNDNlMjdkZDM3NmRiZjI3OGJhNDM5YTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_560e0932c19742afac7001303e6c904f",
+      "statement": "_BUILTIN_PROVIDERS maps provider names (openai, anthropic, bedrock, google_vertexai, mistralai, groq, deepseek, etc.) to tuples of (module_path, class_name, creator_func) supporting dynamic import and instantiation; covers 25+ providers including partner integrations.",
+      "evidence": [
+        {
+          "resource": "repo://libs/langchain_v1/langchain/chat_models/base.py#L56-L122",
+          "version": "repo-lines-v1:sha256:beb023b1fc6120ee5b0ffb203a67d9f1dc61bd21b9217453ede4a7ea890d58a2:eyJzZWxlY3RlZExpbmVDb3VudCI6NjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0OWFmODNkYjQ4ODc5YTQyYjVjNTliMmEyYmY3NThiYWY4YjFkMmQwNTJmOGRmN2VlNWNkOTIyMjJkYTM4NzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMDNlY2RkNGE0ZDEwZjE5YzczZmQ0MmZkMTI0MzdmZDMzNTRhODI2ODE2MDVkYTUyNTVhOTdhMzkwNjhkYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJkNzA5NGEwOTBkZDkxYjgwMmJjZWIxYWNkYzMwYWMyNTc5MjU4YTFjNjkxNTk4YWVmNjYyMDAyMWQ1NWMzMDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxOTY2MDgyOTFhZjY5NzQ1YzViMmVhZDliM2ZhYjRkMjVkZjQ2MjZkNDNhMzQyYTA3ZjkyMGRiYzhiMmJiYWMifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.0",
-    "at": "2026-11-18T08:17:15.497Z"
+    "at": "2026-11-20T08:17:03.730Z"
   }
 }
